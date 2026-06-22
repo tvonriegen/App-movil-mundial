@@ -74,15 +74,24 @@ export class Tab3Page {
         return;
       }
 
-      console.log('Ligas usuario Supabase:', usuario.id);
-
       const ligasSupabase = await this.ligasSupabaseService.obtenerMisLigas(usuario.id);
 
-      console.log('Ligas recibidas desde Supabase:', ligasSupabase);
+      const ligasAdaptadas = adaptarLigasSupabase(ligasSupabase);
 
-      this.ligas = adaptarLigasSupabase(ligasSupabase);
+      const ligasConMiembros = await Promise.all(
+        ligasAdaptadas.map(async (liga) => {
+          const miembros = await this.ligasSupabaseService.obtenerMiembrosLiga(liga.id);
 
-      console.log('Ligas adaptadas:', this.ligas);
+          return {
+            ...liga,
+            miembros: miembros.length
+          };
+        })
+      );
+
+      this.ligas = ligasConMiembros;
+
+      console.log('Ligas finales con miembros reales:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas desde Supabase:', error);
       this.ligas = [];

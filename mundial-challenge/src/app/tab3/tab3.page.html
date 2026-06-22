@@ -25,6 +25,11 @@
 
   <h3>Tus competencias</h3>
 
+  <div class="estado-vacio" *ngIf="ligas.length === 0">
+    <p>Aún no perteneces a ninguna liga.</p>
+    <p>Crea una liga o únete con un código de invitación.</p>
+  </div>
+
   <ion-card class="liga-card" *ngFor="let liga of ligas">
     <ion-card-content>
 
@@ -40,7 +45,11 @@
 
       <div class="liga-info">
         <h4>{{ liga.nombre }}</h4>
-        <p>{{ liga.miembros | number }} miembros participando</p>
+        <p>
+          {{ liga.miembros | number }}
+          {{ liga.miembros === 1 ? 'miembro' : 'miembros' }}
+          participando
+        </p>
       </div>
 
       <div 

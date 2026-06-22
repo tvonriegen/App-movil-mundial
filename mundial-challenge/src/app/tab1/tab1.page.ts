@@ -243,13 +243,26 @@ export class Tab1Page {
         usuarioSupabase.id
       );
 
-      this.ligas = adaptarLigasSupabase(ligasSupabase);
+      const ligasAdaptadas = adaptarLigasSupabase(ligasSupabase);
 
-      console.log('Inicio cargó ligas desde Supabase:', this.ligas);
+      const ligasConMiembros = await Promise.all(
+        ligasAdaptadas.map(async (liga) => {
+          const miembros = await this.ligasSupabaseService.obtenerMiembrosLiga(liga.id);
+
+          return {
+            ...liga,
+            miembros: miembros.length
+          };
+        })
+      );
+
+      this.ligas = ligasConMiembros;
+
+      console.log('Inicio cargó ligas con miembros reales:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas en Inicio desde Supabase:', error);
 
-      this.ligas = this.ligasService.obtenerLigas();
+      this.ligas = [];
     }
   }
 }

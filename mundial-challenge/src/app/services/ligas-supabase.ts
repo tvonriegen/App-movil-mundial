@@ -8,6 +8,7 @@ export interface LigaSupabase {
   codigo: string | null;
   creador_id: string;
   created_at?: string;
+  miembros_count?: number;
 }
 
 export interface MiembroLigaSupabase {
@@ -66,7 +67,18 @@ export class LigasSupabaseService {
       throw errorLigas;
     }
 
-    return ligas ?? [];
+    const ligasConMiembros = await Promise.all(
+      (ligas ?? []).map(async (liga: LigaSupabase) => {
+        const miembros = await this.obtenerMiembrosLiga(liga.id);
+
+        return {
+          ...liga,
+          miembros_count: miembros.length
+        };
+      })
+    );
+
+    return ligasConMiembros;
   }
 
   async obtenerLigaPorId(ligaId: number): Promise<LigaSupabase | null> {
@@ -80,7 +92,16 @@ export class LigasSupabaseService {
       throw error;
     }
 
-    return data;
+    if (!data) {
+      return null;
+    }
+
+    const miembros = await this.obtenerMiembrosLiga(data.id);
+
+    return {
+      ...data,
+      miembros_count: miembros.length
+    };
   }
 
   async obtenerMiembrosLiga(ligaId: number): Promise<MiembroLigaSupabase[]> {
@@ -157,11 +178,13 @@ export class LigasSupabaseService {
       });
 
     if (errorMiembro) {
-      console.error('La liga se creó, pero falló insertar el miembro:', errorMiembro);
       throw errorMiembro;
     }
 
-    return liga;
+    return {
+      ...liga,
+      miembros_count: 1
+    };
   }
 
   async unirseConCodigo(
@@ -198,9 +221,14 @@ export class LigasSupabaseService {
     }
 
     if (miembroExistente) {
+      const miembros = await this.obtenerMiembrosLiga(liga.id);
+
       return {
         estado: 'ya_existe',
-        liga
+        liga: {
+          ...liga,
+          miembros_count: miembros.length
+        }
       };
     }
 
@@ -215,9 +243,14 @@ export class LigasSupabaseService {
       throw errorInsertarMiembro;
     }
 
+    const miembros = await this.obtenerMiembrosLiga(liga.id);
+
     return {
       estado: 'unido',
-      liga
+      liga: {
+        ...liga,
+        miembros_count: miembros.length
+      }
     };
   }
 

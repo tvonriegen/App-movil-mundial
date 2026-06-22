@@ -21,6 +21,7 @@ import { PrediccionesService } from '../services/predicciones';
 import { Prediccion } from '../models/prediccion.model';
 
 import { LigasService } from '../services/ligas';
+import { Liga } from '../models/liga.model';
 
 import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
@@ -29,10 +30,14 @@ import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 import { AuthSupabaseService } from '../services/auth-supabase';
+
 import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
 import { adaptarPrediccionesSupabase } from '../adapters/prediccion.adapter';
 
 import { UsuariosSupabaseService } from '../services/usuarios-supabase';
+
+import { LigasSupabaseService } from '../services/ligas-supabase';
+import { adaptarLigasSupabase } from '../adapters/liga.adapter';
 
 @Component({
   selector: 'app-perfil',
@@ -54,8 +59,10 @@ import { UsuariosSupabaseService } from '../services/usuarios-supabase';
 })
 export class PerfilPage {
   usuario: Usuario;
+
   partidos: Partido[] = [];
   predicciones: Prediccion[] = [];
+  ligas: Liga[] = [];
 
   constructor(
     private usuarioService: UsuarioService,
@@ -67,21 +74,19 @@ export class PerfilPage {
     private partidosSupabaseService: PartidosSupabaseService,
     private authSupabaseService: AuthSupabaseService,
     private prediccionesSupabaseService: PrediccionesSupabaseService,
-    private usuariosSupabaseService: UsuariosSupabaseService
+    private usuariosSupabaseService: UsuariosSupabaseService,
+    private ligasSupabaseService: LigasSupabaseService
   ) {
     this.usuario = this.usuarioService.obtenerUsuario();
 
-    this.partidos = this.partidosService.obtenerPartidos();
-
-    this.predicciones = this.prediccionesService.obtenerPredicciones()
-      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
-
-    this.cargarPerfilDesdeSupabase();
-    this.cargarPartidosDesdeSupabase();
-    this.cargarPrediccionesDesdeSupabase();
+    this.cargarDatosIniciales();
   }
 
   ionViewWillEnter() {
+    this.cargarDatosIniciales();
+  }
+
+  cargarDatosIniciales() {
     this.usuario = this.usuarioService.obtenerUsuario();
 
     this.partidos = this.partidosService.obtenerPartidos();
@@ -89,9 +94,12 @@ export class PerfilPage {
     this.predicciones = this.prediccionesService.obtenerPredicciones()
       .filter(prediccion => prediccion.usuarioId === this.usuario.id);
 
+    this.ligas = [];
+
     this.cargarPerfilDesdeSupabase();
     this.cargarPartidosDesdeSupabase();
     this.cargarPrediccionesDesdeSupabase();
+    this.cargarLigasDesdeSupabase();
   }
 
   async cargarPerfilDesdeSupabase() {
@@ -151,7 +159,7 @@ export class PerfilPage {
 
       this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
 
-      console.log('Perfil cargó predicciones adaptadas:', this.predicciones);
+      console.log('Perfil cargó predicciones desde Supabase:', this.predicciones);
     } catch (error) {
       console.error('Error al cargar predicciones en Perfil desde Supabase:', error);
 
@@ -160,12 +168,47 @@ export class PerfilPage {
     }
   }
 
+  async cargarLigasDesdeSupabase() {
+    try {
+      const usuarioSupabase = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuarioSupabase) {
+        this.ligas = [];
+        return;
+      }
+
+      const ligasSupabase = await this.ligasSupabaseService.obtenerMisLigas(
+        usuarioSupabase.id
+      );
+
+      const ligasAdaptadas = adaptarLigasSupabase(ligasSupabase);
+
+      const ligasConMiembros = await Promise.all(
+        ligasAdaptadas.map(async (liga) => {
+          const miembros = await this.ligasSupabaseService.obtenerMiembrosLiga(liga.id);
+
+          return {
+            ...liga,
+            miembros: miembros.length
+          };
+        })
+      );
+
+      this.ligas = ligasConMiembros;
+
+      console.log('Perfil cargó ligas desde Supabase:', this.ligas);
+    } catch (error) {
+      console.error('Error al cargar ligas en Perfil desde Supabase:', error);
+      this.ligas = [];
+    }
+  }
+
   cantidadPredicciones(): number {
     return this.predicciones.length;
   }
 
   cantidadLigas(): number {
-    return this.ligasService.obtenerLigas().length;
+    return this.ligas.length;
   }
 
   puntosCalculados(): number {
@@ -386,7 +429,7 @@ export class PerfilPage {
   async limpiarDatosPrueba() {
     const alert = await this.alertController.create({
       header: 'Restablecer demo',
-      message: 'Esto borrará tus predicciones, ligas creadas y cambios del perfil para volver al estado inicial de la demo.',
+      message: 'Esto borrará datos locales de prueba, pero no eliminará datos reales guardados en Supabase.',
       buttons: [
         {
           text: 'Cancelar',

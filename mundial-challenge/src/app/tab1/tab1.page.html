@@ -98,13 +98,21 @@
 
   <h3>Tus ligas destacadas</h3>
 
+  <div class="estado-vacio" *ngIf="ligas.length === 0">
+    <p>Aún no tienes ligas.</p>
+    <p>Crea una o únete con código para competir.</p>
+  </div>
+
   <ion-card class="liga-card" *ngFor="let liga of obtenerLigasDestacadas()">
     <ion-card-content>
 
       <div class="liga-resumen">
         <div>
           <strong>{{ liga.nombre }}</strong>
-          <p>{{ liga.tipo }} · {{ liga.miembros | number }} miembros</p>
+          <p>
+            {{ liga.tipo }} · {{ liga.miembros | number }}
+            {{ liga.miembros === 1 ? 'miembro' : 'miembros' }}
+          </p>
         </div>
 
         <div class="posicion-liga">
