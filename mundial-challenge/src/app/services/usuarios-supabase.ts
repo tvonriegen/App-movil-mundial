@@ -4,10 +4,11 @@ import { SupabaseService } from './supabase';
 export interface UsuarioSupabase {
   id: string;
   nombre_usuario: string;
-  email: string | null;
   nombre_visible: string | null;
-  avatar_url: string | null;
+  email: string | null;
+  rol: string | null;
   created_at?: string;
+  updated_at?: string;
 }
 
 @Injectable({
@@ -33,19 +34,25 @@ export class UsuariosSupabaseService {
     return data;
   }
 
-  async crearPerfil(
+  async obtenerOCrearPerfil(
     usuarioId: string,
     nombreUsuario: string,
-    email: string | null
-  ): Promise<UsuarioSupabase | null> {
+    email: string
+  ): Promise<UsuarioSupabase> {
+    const usuarioExistente = await this.obtenerUsuarioPorId(usuarioId);
+
+    if (usuarioExistente) {
+      return usuarioExistente;
+    }
+
     const { data, error } = await this.supabaseService.client
       .from('usuarios')
       .insert({
         id: usuarioId,
-        nombre_usuario: nombreUsuario.trim().toLowerCase(),
+        nombre_usuario: nombreUsuario,
+        nombre_visible: nombreUsuario,
         email,
-        nombre_visible: nombreUsuario.trim(),
-        avatar_url: null
+        rol: 'Analista táctico'
       })
       .select()
       .single();
@@ -59,14 +66,15 @@ export class UsuariosSupabaseService {
 
   async actualizarPerfil(
     usuarioId: string,
-    nombreUsuario: string,
-    nombreVisible: string
-  ): Promise<UsuarioSupabase | null> {
+    nombreVisible: string,
+    rol: string
+  ): Promise<UsuarioSupabase> {
     const { data, error } = await this.supabaseService.client
       .from('usuarios')
       .update({
-        nombre_usuario: nombreUsuario.trim().toLowerCase(),
-        nombre_visible: nombreVisible.trim()
+        nombre_visible: nombreVisible,
+        rol,
+        updated_at: new Date().toISOString()
       })
       .eq('id', usuarioId)
       .select()
@@ -77,19 +85,5 @@ export class UsuariosSupabaseService {
     }
 
     return data;
-  }
-
-  async obtenerOCrearPerfil(
-    usuarioId: string,
-    nombreUsuario: string,
-    email: string | null
-  ): Promise<UsuarioSupabase | null> {
-    const perfilExistente = await this.obtenerUsuarioPorId(usuarioId);
-
-    if (perfilExistente) {
-      return perfilExistente;
-    }
-
-    return this.crearPerfil(usuarioId, nombreUsuario, email);
   }
 }

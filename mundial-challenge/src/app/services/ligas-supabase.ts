@@ -10,12 +10,9 @@ export interface LigaSupabase {
   created_at?: string;
 }
 
-export interface LigaMiembroSupabase {
-  id: number;
-  liga_id: number;
-  usuario_id: string;
-  rol: 'admin' | 'miembro';
-  created_at?: string;
+export interface ResultadoUnionSupabase {
+  estado: 'unido' | 'ya_existe' | 'no_encontrada';
+  liga?: LigaSupabase;
 }
 
 @Injectable({
@@ -27,25 +24,10 @@ export class LigasSupabaseService {
     private supabaseService: SupabaseService
   ) {}
 
-  async obtenerLigaPorId(ligaId: number): Promise<LigaSupabase | null> {
-    const { data, error } = await this.supabaseService.client
-      .from('ligas')
-      .select('*')
-      .eq('id', ligaId)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  }
-
   async obtenerMisLigas(usuarioId: string): Promise<LigaSupabase[]> {
     const { data, error } = await this.supabaseService.client
       .from('liga_miembros')
       .select(`
-        liga_id,
         ligas (
           id,
           nombre,
@@ -62,44 +44,37 @@ export class LigasSupabaseService {
     }
 
     return (data ?? [])
-      .map((item: any) => item.ligas)
+      .map((registro: any) => registro.ligas)
       .filter((liga: LigaSupabase | null) => liga !== null);
   }
 
-  async crearLiga(
-    usuarioId: string,
-    nombre: string,
-    tipo: 'Privada' | 'Publica' = 'Privada'
-  ): Promise<LigaSupabase | null> {
-    const codigo = tipo === 'Privada'
-      ? this.generarCodigo(nombre)
-      : null;
+  async crearLiga(usuarioId: string, nombre: string): Promise<LigaSupabase> {
+    const codigo = this.generarCodigoLiga(nombre);
 
-    const { data: liga, error: ligaError } = await this.supabaseService.client
+    const { data: liga, error: errorLiga } = await this.supabaseService.client
       .from('ligas')
       .insert({
         nombre,
-        tipo,
+        tipo: 'Privada',
         codigo,
         creador_id: usuarioId
       })
       .select()
       .single();
 
-    if (ligaError) {
-      throw ligaError;
+    if (errorLiga) {
+      throw errorLiga;
     }
 
-    const { error: miembroError } = await this.supabaseService.client
+    const { error: errorMiembro } = await this.supabaseService.client
       .from('liga_miembros')
       .insert({
         liga_id: liga.id,
-        usuario_id: usuarioId,
-        rol: 'admin'
+        usuario_id: usuarioId
       });
 
-    if (miembroError) {
-      throw miembroError;
+    if (errorMiembro) {
+      throw errorMiembro;
     }
 
     return liga;
@@ -108,17 +83,17 @@ export class LigasSupabaseService {
   async unirseConCodigo(
     usuarioId: string,
     codigo: string
-  ): Promise<{ liga?: LigaSupabase; estado: 'unido' | 'ya_existe' | 'no_encontrada' }> {
+  ): Promise<ResultadoUnionSupabase> {
     const codigoLimpio = codigo.trim().toUpperCase();
 
-    const { data: liga, error: ligaError } = await this.supabaseService.client
+    const { data: liga, error: errorLiga } = await this.supabaseService.client
       .from('ligas')
       .select('*')
       .eq('codigo', codigoLimpio)
       .maybeSingle();
 
-    if (ligaError) {
-      throw ligaError;
+    if (errorLiga) {
+      throw errorLiga;
     }
 
     if (!liga) {
@@ -127,63 +102,50 @@ export class LigasSupabaseService {
       };
     }
 
-    const { data: miembroExistente, error: miembroExisteError } = await this.supabaseService.client
+    const { data: miembroExistente, error: errorMiembroExistente } = await this.supabaseService.client
       .from('liga_miembros')
       .select('*')
       .eq('liga_id', liga.id)
       .eq('usuario_id', usuarioId)
       .maybeSingle();
 
-    if (miembroExisteError) {
-      throw miembroExisteError;
+    if (errorMiembroExistente) {
+      throw errorMiembroExistente;
     }
 
     if (miembroExistente) {
       return {
-        liga,
-        estado: 'ya_existe'
+        estado: 'ya_existe',
+        liga
       };
     }
 
-    const { error: insertarError } = await this.supabaseService.client
+    const { error: errorInsertarMiembro } = await this.supabaseService.client
       .from('liga_miembros')
       .insert({
         liga_id: liga.id,
-        usuario_id: usuarioId,
-        rol: 'miembro'
+        usuario_id: usuarioId
       });
 
-    if (insertarError) {
-      throw insertarError;
+    if (errorInsertarMiembro) {
+      throw errorInsertarMiembro;
     }
 
     return {
-      liga,
-      estado: 'unido'
+      estado: 'unido',
+      liga
     };
   }
 
-  async obtenerCantidadMiembros(ligaId: number): Promise<number> {
-    const { count, error } = await this.supabaseService.client
-      .from('liga_miembros')
-      .select('*', { count: 'exact', head: true })
-      .eq('liga_id', ligaId);
-
-    if (error) {
-      throw error;
-    }
-
-    return count ?? 0;
-  }
-
-  private generarCodigo(nombre: string): string {
+  private generarCodigoLiga(nombre: string): string {
     const base = nombre
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .substring(0, 6)
-      .toUpperCase() || 'LIGA';
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6);
 
-    const numero = Math.floor(Math.random() * 9000) + 1000;
+    const aleatorio = Math.floor(1000 + Math.random() * 9000);
 
-    return `${base}${numero}`;
+    return `${base || 'LIGA'}${aleatorio}`;
   }
 }

@@ -12,15 +12,22 @@ import {
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+
 import { LigasService } from '../services/ligas';
 import { Liga } from '../models/liga.model';
+
 import { PrediccionesService } from '../services/predicciones';
 import { PartidosService } from '../services/partidos';
+
+import { AuthSupabaseService } from '../services/auth-supabase';
+import { LigasSupabaseService } from '../services/ligas-supabase';
+import { adaptarLigaSupabase, adaptarLigasSupabase } from '../adapters/liga.adapter';
 
 @Component({
   selector: 'app-tab3',
   templateUrl: 'tab3.page.html',
   styleUrls: ['tab3.page.scss'],
+  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
@@ -41,13 +48,41 @@ export class Tab3Page {
     private ligasService: LigasService,
     private alertController: AlertController,
     private prediccionesService: PrediccionesService,
-    private partidosService: PartidosService
+    private partidosService: PartidosService,
+    private authSupabaseService: AuthSupabaseService,
+    private ligasSupabaseService: LigasSupabaseService
   ) {
+    this.cargarLigas();
+  }
+
+  ionViewWillEnter() {
     this.cargarLigas();
   }
 
   cargarLigas() {
     this.ligas = this.ligasService.obtenerLigas();
+
+    this.cargarLigasDesdeSupabase();
+  }
+
+  async cargarLigasDesdeSupabase() {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        return;
+      }
+
+      const ligasSupabase = await this.ligasSupabaseService.obtenerMisLigas(usuario.id);
+
+      this.ligas = adaptarLigasSupabase(ligasSupabase);
+
+      console.log('Ligas cargadas desde Supabase:', this.ligas);
+    } catch (error) {
+      console.error('Error al cargar ligas desde Supabase:', error);
+
+      this.ligas = this.ligasService.obtenerLigas();
+    }
   }
 
   async abrirCrearLiga() {
@@ -68,17 +103,46 @@ export class Tab3Page {
         },
         {
           text: 'Crear',
-          handler: (data) => {
+          handler: async (data) => {
             const nombre = data.nombre?.trim();
 
             if (!nombre) {
               return false;
             }
 
-            const nuevaLiga = this.ligasService.crearLiga(nombre);
-            this.cargarLigas();
-            this.mostrarLigaCreada(nuevaLiga.nombre, nuevaLiga.codigo);
-            return true;
+            try {
+              const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+              if (!usuario) {
+                return false;
+              }
+
+              const ligaSupabase = await this.ligasSupabaseService.crearLiga(
+                usuario.id,
+                nombre
+              );
+
+              const nuevaLiga = adaptarLigaSupabase(ligaSupabase);
+
+              this.ligas = [
+                nuevaLiga,
+                ...this.ligas.filter(liga => liga.id !== nuevaLiga.id)
+              ];
+
+              await this.mostrarLigaCreada(nuevaLiga.nombre, nuevaLiga.codigo);
+
+              return true;
+            } catch (error) {
+              console.error('Error al crear liga en Supabase:', error);
+
+              const nuevaLiga = this.ligasService.crearLiga(nombre);
+
+              this.cargarLigas();
+
+              await this.mostrarLigaCreada(nuevaLiga.nombre, nuevaLiga.codigo);
+
+              return true;
+            }
           }
         }
       ]
@@ -105,32 +169,72 @@ export class Tab3Page {
         },
         {
           text: 'Unirme',
-          handler: (data) => {
+          handler: async (data) => {
             const codigo = data.codigo?.trim();
 
             if (!codigo) {
               return false;
             }
 
-            const resultado = this.ligasService.unirseConCodigo(codigo);
+            try {
+              const usuario = await this.authSupabaseService.obtenerUsuarioActual();
 
-            if (resultado.estado === 'no_encontrada') {
-              this.mostrarErrorCodigo();
+              if (!usuario) {
+                return false;
+              }
+
+              const resultado = await this.ligasSupabaseService.unirseConCodigo(
+                usuario.id,
+                codigo
+              );
+
+              if (resultado.estado === 'no_encontrada') {
+                await this.mostrarErrorCodigo();
+                return false;
+              }
+
+              if (resultado.estado === 'ya_existe' && resultado.liga) {
+                await this.mostrarYaPertenece(resultado.liga.nombre);
+                return true;
+              }
+
+              if (resultado.estado === 'unido' && resultado.liga) {
+                const ligaAdaptada = adaptarLigaSupabase(resultado.liga);
+
+                this.ligas = [
+                  ligaAdaptada,
+                  ...this.ligas.filter(liga => liga.id !== ligaAdaptada.id)
+                ];
+
+                await this.mostrarUnionExitosa(resultado.liga.nombre);
+
+                return true;
+              }
+
+              return false;
+            } catch (error) {
+              console.error('Error al unirse a liga en Supabase:', error);
+
+              const resultado = this.ligasService.unirseConCodigo(codigo);
+
+              if (resultado.estado === 'no_encontrada') {
+                await this.mostrarErrorCodigo();
+                return false;
+              }
+
+              if (resultado.estado === 'ya_existe' && resultado.liga) {
+                await this.mostrarYaPertenece(resultado.liga.nombre);
+                return true;
+              }
+
+              if (resultado.estado === 'unido' && resultado.liga) {
+                this.cargarLigas();
+                await this.mostrarUnionExitosa(resultado.liga.nombre);
+                return true;
+              }
+
               return false;
             }
-
-            if (resultado.estado === 'ya_existe' && resultado.liga) {
-              this.mostrarYaPertenece(resultado.liga.nombre);
-              return true;
-            }
-
-            if (resultado.estado === 'unido' && resultado.liga) {
-              this.cargarLigas();
-              this.mostrarUnionExitosa(resultado.liga.nombre);
-              return true;
-            }
-
-            return false;
           }
         }
       ]
@@ -164,7 +268,7 @@ export class Tab3Page {
   async mostrarErrorCodigo() {
     const alert = await this.alertController.create({
       header: 'Código no encontrado',
-      message: 'No encontramos una liga con ese código. Prueba con FAMILIA26 o UDD2026.',
+      message: 'No encontramos una liga con ese código. Revisa que esté bien escrito.',
       buttons: ['Entendido']
     });
 
@@ -198,5 +302,5 @@ export class Tab3Page {
       this.partidosService.obtenerPartidos(),
       1
     );
-  }  
+  }
 }

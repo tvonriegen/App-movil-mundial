@@ -27,9 +27,12 @@ import { Partido } from '../models/partido.model';
 
 import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
+
 import { AuthSupabaseService } from '../services/auth-supabase';
 import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
 import { adaptarPrediccionesSupabase } from '../adapters/prediccion.adapter';
+
+import { UsuariosSupabaseService } from '../services/usuarios-supabase';
 
 @Component({
   selector: 'app-perfil',
@@ -63,16 +66,17 @@ export class PerfilPage {
     private router: Router,
     private partidosSupabaseService: PartidosSupabaseService,
     private authSupabaseService: AuthSupabaseService,
-    private prediccionesSupabaseService: PrediccionesSupabaseService
+    private prediccionesSupabaseService: PrediccionesSupabaseService,
+    private usuariosSupabaseService: UsuariosSupabaseService
   ) {
     this.usuario = this.usuarioService.obtenerUsuario();
 
-    // Respaldo local inicial por si Supabase falla
     this.partidos = this.partidosService.obtenerPartidos();
+
     this.predicciones = this.prediccionesService.obtenerPredicciones()
       .filter(prediccion => prediccion.usuarioId === this.usuario.id);
 
-    // Luego intenta cargar desde Supabase
+    this.cargarPerfilDesdeSupabase();
     this.cargarPartidosDesdeSupabase();
     this.cargarPrediccionesDesdeSupabase();
   }
@@ -85,8 +89,37 @@ export class PerfilPage {
     this.predicciones = this.prediccionesService.obtenerPredicciones()
       .filter(prediccion => prediccion.usuarioId === this.usuario.id);
 
+    this.cargarPerfilDesdeSupabase();
     this.cargarPartidosDesdeSupabase();
     this.cargarPrediccionesDesdeSupabase();
+  }
+
+  async cargarPerfilDesdeSupabase() {
+    try {
+      const usuarioSupabase = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuarioSupabase) {
+        return;
+      }
+
+      const perfil = await this.usuariosSupabaseService.obtenerUsuarioPorId(
+        usuarioSupabase.id
+      );
+
+      if (!perfil) {
+        return;
+      }
+
+      const nombre = perfil.nombre_visible || perfil.nombre_usuario;
+      const rol = perfil.rol || 'Analista táctico';
+
+      this.usuarioService.actualizarPerfil(nombre, rol);
+      this.usuario = this.usuarioService.obtenerUsuario();
+
+      console.log('Perfil cargó usuario desde Supabase:', perfil);
+    } catch (error) {
+      console.error('Error al cargar perfil desde Supabase:', error);
+    }
   }
 
   async cargarPartidosDesdeSupabase() {
@@ -100,6 +133,30 @@ export class PerfilPage {
       console.error('Error al cargar partidos en Perfil desde Supabase:', error);
 
       this.partidos = this.partidosService.obtenerPartidos();
+    }
+  }
+
+  async cargarPrediccionesDesdeSupabase() {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        console.log('Perfil: no hay usuario Supabase actual');
+        return;
+      }
+
+      const prediccionesSupabase = await this.prediccionesSupabaseService.obtenerMisPredicciones(
+        usuario.id
+      );
+
+      this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
+
+      console.log('Perfil cargó predicciones adaptadas:', this.predicciones);
+    } catch (error) {
+      console.error('Error al cargar predicciones en Perfil desde Supabase:', error);
+
+      this.predicciones = this.prediccionesService.obtenerPredicciones()
+        .filter(prediccion => prediccion.usuarioId === this.usuario.id);
     }
   }
 
@@ -225,7 +282,7 @@ export class PerfilPage {
         },
         {
           text: 'Guardar',
-          handler: (data) => {
+          handler: async (data) => {
             const nombre = data.nombre?.trim();
             const rol = data.rol?.trim();
 
@@ -233,10 +290,31 @@ export class PerfilPage {
               return false;
             }
 
-            this.usuarioService.actualizarPerfil(nombre, rol);
-            this.usuario = this.usuarioService.obtenerUsuario();
+            try {
+              const usuarioSupabase = await this.authSupabaseService.obtenerUsuarioActual();
 
-            return true;
+              if (!usuarioSupabase) {
+                return false;
+              }
+
+              await this.usuariosSupabaseService.actualizarPerfil(
+                usuarioSupabase.id,
+                nombre,
+                rol
+              );
+
+              this.usuarioService.actualizarPerfil(nombre, rol);
+              this.usuario = this.usuarioService.obtenerUsuario();
+
+              return true;
+            } catch (error) {
+              console.error('Error al actualizar perfil en Supabase:', error);
+
+              this.usuarioService.actualizarPerfil(nombre, rol);
+              this.usuario = this.usuarioService.obtenerUsuario();
+
+              return true;
+            }
           }
         }
       ]
@@ -332,33 +410,5 @@ export class PerfilPage {
     });
 
     await alert.present();
-  }
-
-  async cargarPrediccionesDesdeSupabase() {
-    try {
-      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
-
-      if (!usuario) {
-        console.log('Perfil: no hay usuario Supabase actual');
-        return;
-      }
-
-      console.log('Perfil usuario Supabase:', usuario.id);
-
-      const prediccionesSupabase = await this.prediccionesSupabaseService.obtenerMisPredicciones(
-        usuario.id
-      );
-
-      console.log('Predicciones recibidas desde Supabase:', prediccionesSupabase);
-
-      this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
-
-      console.log('Perfil cargó predicciones adaptadas:', this.predicciones);
-    } catch (error) {
-      console.error('Error al cargar predicciones en Perfil desde Supabase:', error);
-
-      this.predicciones = this.prediccionesService.obtenerPredicciones()
-        .filter(prediccion => prediccion.usuarioId === this.usuario.id);
-    }
   }
 }
