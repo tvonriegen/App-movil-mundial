@@ -1,0 +1,131 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Mundial Challenge 2026</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <section class="home-hero">
+    <h2>Hola, {{ usuario.nombre }}</h2>
+    <p class="subtitulo">Revisa tus partidos, predice resultados y compite en tus ligas.</p>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <small>Mis puntos</small>
+        <strong>{{ puntosCalculados() }}</strong>
+      </div>
+
+      <div class="stat-card">
+        <small>Posición</small>
+        <strong>#{{ usuario.posicion }}</strong>
+      </div>
+
+      <div class="stat-card">
+        <small>Ligas</small>
+        <strong>{{ ligas.length }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <h3>Próximo partido destacado</h3>
+
+  <ion-card class="partido-destacado" *ngIf="partidoDestacado">
+    <ion-card-content>
+
+      <div class="partido-meta">
+        {{ partidoDestacado.fecha }} · {{ partidoDestacado.hora }} · {{ partidoDestacado.grupo }}
+      </div>
+
+      <div class="partido-equipos">
+
+        <div class="equipo">
+          <div class="equipo-codigo">{{ partidoDestacado.banderaLocal }}</div>
+          <div class="equipo-nombre">{{ partidoDestacado.local }}</div>
+        </div>
+
+        <div class="versus">
+          VS
+        </div>
+
+        <div class="equipo">
+          <div class="equipo-codigo">{{ partidoDestacado.banderaVisitante }}</div>
+          <div class="equipo-nombre">{{ partidoDestacado.visitante }}</div>
+        </div>
+
+      </div>
+
+      <div class="prediccion-guardada" *ngIf="tienePrediccion(partidoDestacado.id)">
+        Tu predicción: <strong>{{ textoPrediccion(partidoDestacado.id) }}</strong>
+      </div>
+
+      <ion-button
+        expand="block"
+        color="danger"
+        [routerLink]="['/prediccion', partidoDestacado.id]">
+        {{ tienePrediccion(partidoDestacado.id) ? 'Editar predicción' : 'Hacer predicción' }}
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+  <h3>Próximos partidos</h3>
+
+  <div class="lista-partidos">
+    <ion-list>
+      <ion-item
+        button
+        *ngFor="let partido of proximosPartidos()"
+        [routerLink]="['/prediccion', partido.id]">
+        <ion-label>
+          <strong>{{ partido.banderaLocal }} {{ partido.local }}</strong>
+          vs
+          <strong>{{ partido.banderaVisitante }} {{ partido.visitante }}</strong>
+          <p>{{ partido.fecha }} · {{ partido.hora }} · {{ partido.grupo }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <ion-button
+    class="boton-calendario"
+    expand="block"
+    fill="clear"
+    color="primary"
+    routerLink="/tabs/tab2">
+    Ver calendario completo
+  </ion-button>
+
+  <h3>Tus ligas destacadas</h3>
+
+  <ion-card class="liga-card" *ngFor="let liga of obtenerLigasDestacadas()">
+    <ion-card-content>
+
+      <div class="liga-resumen">
+        <div>
+          <strong>{{ liga.nombre }}</strong>
+          <p>{{ liga.tipo }} · {{ liga.miembros | number }} miembros</p>
+        </div>
+
+        <div class="posicion-liga">
+          #{{ liga.posicionUsuario }}
+        </div>
+      </div>
+
+      <div class="liga-puntos">
+        <span>{{ puntosCalculados() }} puntos</span>
+        <span>Tu puntaje actual</span>
+      </div>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="primary"
+        [routerLink]="['/ranking', liga.id]">
+        Ver clasificación
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

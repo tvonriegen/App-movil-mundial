@@ -1,0 +1,136 @@
+.partidos-hero {
+  margin-bottom: 18px;
+}
+
+.partidos-hero h2 {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.filtros-partidos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.filtros-partidos ion-chip {
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.partido-card {
+  margin-bottom: 16px;
+}
+
+.partido-card ion-card-content {
+  padding: 20px 18px;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.card-top strong {
+  color: #102033;
+  font-size: 15px;
+}
+
+.card-top p {
+  margin: 4px 0 0;
+  color: #51637c;
+  font-size: 13px;
+}
+
+.badges-partido {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.partido-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.equipo-box {
+  min-width: 0;
+  text-align: center;
+}
+
+.codigo-equipo {
+  font-size: 30px;
+  font-weight: 950;
+  color: #102033;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.nombre-equipo {
+  color: #102033;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.marcador-box {
+  width: 76px;
+  min-height: 58px;
+  border-radius: 18px;
+  background: #f1f5f9;
+  color: #0057ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.marcador-box strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.marcador-box small {
+  display: block;
+  margin-top: 6px;
+  color: #51637c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.prediccion-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  color: #51637c;
+  font-size: 14px;
+}
+
+.prediccion-card strong {
+  color: #102033;
+}
+
+.partido-card ion-button {
+  margin-top: 6px;
+}
+
+.estado-vacio {
+  text-align: center;
+}

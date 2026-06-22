@@ -1,0 +1,258 @@
+ion-content {
+  --background: #f3f6fb;
+}
+
+h2 {
+  margin-top: 8px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+h3 {
+  margin-top: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.subtitulo {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stats-grid ion-card {
+  margin: 0;
+  text-align: center;
+  border-radius: 14px;
+}
+
+.stats-grid small {
+  text-transform: uppercase;
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.stats-grid h3 {
+  margin: 6px 0 0;
+  color: #0b55d9;
+}
+
+.partido-card {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.equipo {
+  min-width: 0;
+}
+
+.bandera {
+  font-size: 34px;
+  margin-bottom: 4px;
+}
+
+.versus h2 {
+  margin: 4px 0;
+  color: #0b55d9;
+}
+
+ion-button {
+  --border-radius: 10px;
+  font-weight: 700;
+}
+
+ion-content::part(scroll) {
+  max-width: 430px;
+  margin: 0 auto;
+  background: #f3f6fb;
+}
+
+.prediccion-guardada {
+  background: #e0f2fe;
+  color: #075985;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.liga-resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.liga-resumen strong {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.liga-resumen p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.posicion-liga {
+  color: #0b55d9;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.liga-puntos {
+  display: flex;
+  justify-content: space-between;
+  margin: 14px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+ion-content {
+  --padding-top: 18px;
+}
+
+h2 {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+h3 {
+  font-size: 24px;
+  margin-top: 28px;
+  margin-bottom: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 18px 0 26px;
+}
+
+.stat-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 8px;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.stat-card small {
+  color: #51637c;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #0057ff;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.partido-destacado {
+  background:
+    radial-gradient(circle at top left, rgba(227, 6, 19, 0.16), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(242, 183, 5, 0.24), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  padding: 0;
+}
+
+.partido-equipos {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.equipo-codigo {
+  font-size: 30px;
+  font-weight: 950;
+  color: #102033;
+}
+
+.equipo-nombre {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.versus {
+  color: #0057ff;
+  font-weight: 950;
+  font-size: 18px;
+}
+
+.partido-meta {
+  text-align: center;
+  color: #51637c;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.lista-partidos {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.lista-partidos ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+}
+
+.lista-partidos strong {
+  font-weight: 950;
+}
+
+.lista-partidos p {
+  color: #51637c;
+}
+
+.partido-destacado {
+  margin-top: 8px;
+}
+
+.partido-destacado ion-card-content {
+  padding: 28px 18px 24px;
+}
+
+.partido-meta {
+  margin-bottom: 22px;
+}
+
+.partido-equipos {
+  margin-bottom: 18px;
+}
+
+.partido-destacado ion-button {
+  width: 92%;
+  margin: 0 auto;
+  margin-top: 6px;
+}
+
+h3 {
+  font-size: 23px;
+  line-height: 1.15;
+}

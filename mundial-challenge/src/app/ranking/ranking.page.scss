@@ -1,0 +1,130 @@
+.ranking-hero {
+  margin-bottom: 18px;
+}
+
+.ranking-hero ion-badge {
+  margin-bottom: 10px;
+}
+
+.ranking-hero h2 {
+  font-size: 28px;
+  margin: 0 0 6px;
+}
+
+.usuario-ranking {
+  background:
+    radial-gradient(circle at top left, rgba(227, 6, 19, 0.12), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(242, 183, 5, 0.24), transparent 34%),
+    #ffffff;
+  margin-bottom: 26px;
+}
+
+.usuario-ranking ion-card-content {
+  padding: 20px 18px;
+}
+
+.usuario-ranking small {
+  color: #51637c;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.usuario-ranking-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.usuario-ranking-main strong {
+  color: #102033;
+  font-size: 34px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.usuario-ranking-main p {
+  margin: 6px 0 0;
+  color: #0057ff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.ranking-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  background: #102033;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+h3 {
+  font-size: 23px;
+  margin-bottom: 14px;
+}
+
+.ranking-card ion-card-content {
+  padding: 8px;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 48px 44px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 10px;
+  border-radius: 16px;
+}
+
+.ranking-row + .ranking-row {
+  margin-top: 6px;
+}
+
+.usuario-actual {
+  background: #fff1f2;
+  border: 1px solid rgba(227, 6, 19, 0.18);
+}
+
+.ranking-posicion {
+  color: #0057ff;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.ranking-avatar-mini {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: #f1f5f9;
+  color: #102033;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.ranking-info {
+  min-width: 0;
+}
+
+.ranking-info strong {
+  display: block;
+  color: #102033;
+  font-size: 15px;
+  font-weight: 950;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranking-info p {
+  margin: 3px 0 0;
+  color: #51637c;
+  font-size: 13px;
+  font-weight: 800;
+}

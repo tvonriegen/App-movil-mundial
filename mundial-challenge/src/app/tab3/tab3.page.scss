@@ -1,0 +1,116 @@
+.ligas-hero {
+  margin-bottom: 18px;
+}
+
+.ligas-hero h2 {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.acciones-ligas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+h3 {
+  font-size: 23px;
+  margin-bottom: 14px;
+}
+
+.liga-card {
+  margin-bottom: 16px;
+}
+
+.liga-card ion-card-content {
+  padding: 20px 18px;
+}
+
+.liga-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.liga-posicion {
+  background: #f1f5f9;
+  color: #0057ff;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.liga-info h4 {
+  margin: 0;
+  color: #102033;
+  font-size: 21px;
+  font-weight: 950;
+  letter-spacing: -0.3px;
+}
+
+.liga-info p {
+  margin: 6px 0 0;
+  color: #51637c;
+  font-size: 14px;
+}
+
+.codigo-liga {
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff7df 0%, #fffaf0 100%);
+  border: 1px solid rgba(242, 183, 5, 0.45);
+  cursor: pointer;
+}
+
+.codigo-liga span {
+  display: block;
+  color: #51637c;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.codigo-liga strong {
+  color: #102033;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: 0.6px;
+}
+
+.liga-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.liga-stats div {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 13px 12px;
+}
+
+.liga-stats small {
+  display: block;
+  color: #51637c;
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.liga-stats strong {
+  color: #0057ff;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.liga-card ion-button {
+  margin-top: 4px;
+}

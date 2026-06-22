@@ -1,0 +1,77 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Ligas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <section class="ligas-hero">
+    <h2>Mis ligas</h2>
+    <p class="subtitulo">
+      Compite con tus amigos, familia o comunidades durante el Mundial.
+    </p>
+  </section>
+
+  <div class="acciones-ligas">
+    <ion-button expand="block" color="danger" (click)="abrirCrearLiga()">
+      Crear liga
+    </ion-button>
+
+    <ion-button expand="block" fill="outline" color="primary" (click)="abrirUnirseConCodigo()">
+      Unirme con código
+    </ion-button>
+  </div>
+
+  <h3>Tus competencias</h3>
+
+  <ion-card class="liga-card" *ngFor="let liga of ligas">
+    <ion-card-content>
+
+      <div class="liga-top">
+        <ion-badge [color]="liga.tipo === 'Privada' ? 'warning' : 'primary'">
+          {{ liga.tipo }}
+        </ion-badge>
+
+        <div class="liga-posicion">
+          #{{ liga.posicionUsuario }}
+        </div>
+      </div>
+
+      <div class="liga-info">
+        <h4>{{ liga.nombre }}</h4>
+        <p>{{ liga.miembros | number }} miembros participando</p>
+      </div>
+
+      <div 
+        class="codigo-liga" 
+        *ngIf="liga.tipo === 'Privada' && liga.codigo"
+        (click)="copiarCodigo(liga.codigo)">
+        <span>Código de invitación</span>
+        <strong>{{ liga.codigo }}</strong>
+      </div>
+
+      <div class="liga-stats">
+        <div>
+          <small>Tu puntaje</small>
+          <strong>{{ puntosCalculados() }}</strong>
+        </div>
+
+        <div>
+          <small>Posición</small>
+          <strong>#{{ liga.posicionUsuario }}</strong>
+        </div>
+      </div>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="primary"
+        [routerLink]="['/ranking', liga.id]">
+        Ver clasificación
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

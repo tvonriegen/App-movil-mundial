@@ -1,0 +1,120 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Partidos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <section class="partidos-hero">
+    <h2>Calendario de partidos</h2>
+    <p class="subtitulo">
+      Revisa los encuentros, predice resultados y sigue tus puntos.
+    </p>
+  </section>
+
+  <div class="filtros-partidos">
+    <ion-chip
+      [color]="filtroActual === 'hoy' ? 'danger' : 'medium'"
+      (click)="cambiarFiltro('hoy')">
+      Hoy
+    </ion-chip>
+
+    <ion-chip
+      [color]="filtroActual === 'proximos' ? 'danger' : 'medium'"
+      (click)="cambiarFiltro('proximos')">
+      Próximos
+    </ion-chip>
+
+    <ion-chip
+      [color]="filtroActual === 'grupos' ? 'danger' : 'medium'"
+      (click)="cambiarFiltro('grupos')">
+      Fase de grupos
+    </ion-chip>
+  </div>
+
+  <ion-card *ngIf="partidosFiltrados().length === 0" class="estado-vacio">
+    <ion-card-content>
+      <h3>No hay partidos</h3>
+      <p class="subtitulo">No existen partidos para este filtro.</p>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card class="partido-card" *ngFor="let partido of partidosFiltrados()">
+    <ion-card-content>
+
+      <div class="card-top">
+        <div>
+          <strong>{{ partido.fecha }}</strong>
+          <p>{{ partido.hora }} · {{ partido.grupo }}</p>
+        </div>
+
+        <div class="badges-partido">
+          <ion-badge color="light">{{ partido.grupo }}</ion-badge>
+
+          <ion-badge
+            *ngIf="partido.estado === 'pendiente' && tienePrediccion(partido.id)"
+            color="success">
+            Predicho
+          </ion-badge>
+
+          <ion-badge
+            *ngIf="partido.estado === 'finalizado'"
+            color="medium">
+            Finalizado
+          </ion-badge>
+        </div>
+      </div>
+
+      <div class="partido-main">
+
+        <div class="equipo-box">
+          <div class="codigo-equipo">{{ partido.banderaLocal }}</div>
+          <div class="nombre-equipo">{{ partido.local }}</div>
+        </div>
+
+        <div class="marcador-box">
+          <ng-container *ngIf="partido.estado === 'finalizado'; else partidoPendiente">
+            <strong>{{ partido.golesLocal }} - {{ partido.golesVisitante }}</strong>
+            <small>Final</small>
+          </ng-container>
+
+          <ng-template #partidoPendiente>
+            <strong>VS</strong>
+            <small>Por jugar</small>
+          </ng-template>
+        </div>
+
+        <div class="equipo-box">
+          <div class="codigo-equipo">{{ partido.banderaVisitante }}</div>
+          <div class="nombre-equipo">{{ partido.visitante }}</div>
+        </div>
+
+      </div>
+
+      <div class="prediccion-card" *ngIf="tienePrediccion(partido.id)">
+        Tu predicción:
+        <strong>{{ textoPrediccion(partido.id) }}</strong>
+      </div>
+
+      <ion-button
+        *ngIf="partido.estado === 'pendiente'"
+        expand="block"
+        [color]="tienePrediccion(partido.id) ? 'primary' : 'danger'"
+        [routerLink]="['/prediccion', partido.id]">
+        {{ tienePrediccion(partido.id) ? 'Editar predicción' : 'Predecir' }}
+      </ion-button>
+
+      <ion-button
+        *ngIf="partido.estado === 'finalizado'"
+        expand="block"
+        fill="outline"
+        color="primary"
+        (click)="verResultado(partido)">
+        Ver resultado
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

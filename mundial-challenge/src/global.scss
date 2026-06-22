@@ -1,0 +1,131 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+@import '@ionic/angular/css/palettes/dark.system.css';
+
+ion-content {
+  --background: linear-gradient(180deg, #eef3fb 0%, #f8fafc 45%, #f3f6fa 100%);
+}
+
+ion-toolbar {
+  --background: rgba(255, 255, 255, 0.96);
+  --color: #102033;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+ion-title {
+  font-weight: 900;
+  letter-spacing: -0.4px;
+}
+
+ion-card {
+  --background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+ion-card-content {
+  color: #102033;
+}
+
+ion-button {
+  font-weight: 900;
+  text-transform: none;
+  letter-spacing: 0.2px;
+  --border-radius: 14px;
+  min-height: 44px;
+}
+
+ion-badge {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 800;
+}
+
+h1, h2, h3 {
+  color: #102033;
+  font-weight: 950;
+  letter-spacing: -0.6px;
+}
+
+.subtitulo {
+  color: #51637c;
+  line-height: 1.45;
+}
+
+ion-list {
+  background: transparent;
+}
+
+ion-item {
+  --background: #ffffff;
+  --border-color: #e2e8f0;
+  --color: #102033;
+}
+
+ion-tab-bar {
+  --background: rgba(255, 255, 255, 0.98);
+  border-top: 1px solid #e2e8f0;
+  height: 68px;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
+}
+
+ion-tab-button {
+  --color: #64748b;
+  --color-selected: #e30613;
+  font-weight: 800;
+}
+
+.resultado-alerta .alert-message,
+ion-alert.resultado-alerta .alert-message {
+  white-space: pre-line !important;
+  line-height: 1.5 !important;
+}
+
+@media (min-width: 768px) {
+  body {
+    background: #dbe3ee;
+  }
+
+  ion-app {
+    max-width: 430px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(15, 23, 42, 0.22);
+    border-left: 1px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+  }
+}

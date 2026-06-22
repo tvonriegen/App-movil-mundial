@@ -1,0 +1,61 @@
+<ion-content class="login-content">
+
+  <div class="login-wrapper">
+
+    <div class="logo-box">
+      <div class="logo">⚽</div>
+      <small>Mundial Challenge 2026</small>
+    </div>
+
+    <div class="titulo-box">
+      <h1>Mundial<br>Challenge<br>2026</h1>
+      <p>Predice resultados, compite en ligas y sube en el ranking del Mundial.</p>
+    </div>
+
+    <div class="login-form">
+
+      <ion-item lines="none">
+        <ion-label position="stacked">Nombre de usuario</ion-label>
+        <ion-input
+          [(ngModel)]="nombreUsuario"
+          placeholder="Ej: ignacio10">
+        </ion-input>
+      </ion-item>
+
+      <ion-item lines="none">
+        <ion-label position="stacked">Contraseña</ion-label>
+        <ion-input
+          [(ngModel)]="password"
+          type="password"
+          placeholder="Ingresa tu contraseña">
+        </ion-input>
+      </ion-item>
+
+    </div>
+
+    <div class="acciones">
+      <ion-button
+        expand="block"
+        color="danger"
+        [disabled]="!nombreUsuario.trim() || !password.trim()"
+        (click)="iniciarSesion()">
+        Iniciar sesión
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="medium"
+        [disabled]="!nombreUsuario.trim() || !password.trim()"
+        (click)="crearCuenta()">
+        Crear cuenta
+      </ion-button>
+    </div>
+
+    <p class="demo-text">
+      Modo demo: la contraseña solo se valida como campo obligatorio.
+    </p>
+
+  </div>
+
+</ion-content>

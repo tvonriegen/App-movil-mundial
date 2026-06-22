@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab3"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title>Clasificación</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <section class="ranking-hero" *ngIf="liga">
+    <ion-badge [color]="liga.tipo === 'Privada' ? 'warning' : 'primary'">
+      {{ liga.tipo }}
+    </ion-badge>
+
+    <h2>{{ liga.nombre }}</h2>
+
+    <p class="subtitulo">
+      {{ liga.miembros | number }} miembros compitiendo en esta liga.
+    </p>
+  </section>
+
+  <ion-card class="usuario-ranking" *ngIf="liga">
+    <ion-card-content>
+      <small>Tu posición actual</small>
+
+      <div class="usuario-ranking-main">
+        <div>
+          <strong>#{{ posicionUsuarioActual() }}</strong>
+          <p>{{ puntosUsuarioActual() }} puntos</p>
+        </div>
+
+        <div class="ranking-avatar">
+          T
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <h3>Tabla de posiciones</h3>
+
+  <ion-card class="ranking-card">
+    <ion-card-content>
+
+      <div
+        class="ranking-row"
+        *ngFor="let jugador of ranking"
+        [class.usuario-actual]="jugador.esUsuario">
+
+        <div class="ranking-posicion">
+          #{{ jugador.posicion }}
+        </div>
+
+        <div class="ranking-avatar-mini">
+          {{ jugador.avatar }}
+        </div>
+
+        <div class="ranking-info">
+          <strong>{{ jugador.nombre }}</strong>
+          <p>{{ jugador.puntos }} pts</p>
+        </div>
+
+        <ion-badge *ngIf="jugador.esUsuario" color="danger">
+          Tú
+        </ion-badge>
+
+      </div>
+
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

@@ -1,0 +1,118 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab2"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Predicción del partido</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <ng-container *ngIf="partido; else noPartido">
+
+    <div class="match-info">
+      <span>{{ partido.grupo }} · {{ partido.fecha }} · {{ partido.hora }}</span>
+    </div>
+
+    <ion-card>
+      <ion-card-content>
+
+        <p class="label">Tu predicción</p>
+
+        <p class="partido-cerrado" *ngIf="!partidoEditable()">
+          Este partido ya está cerrado. No puedes modificar tu predicción.
+        </p>
+
+        <div class="prediction-grid">
+
+          <div class="team-box">
+            <div class="flag">{{ partido.banderaLocal }}</div>
+            <strong>{{ partido.local }}</strong>
+
+            <div class="score-control">
+              <ion-button size="small" fill="clear" (click)="restarLocal()">−</ion-button>
+              <span>{{ golesLocal }}</span>
+              <ion-button size="small" fill="clear" (click)="sumarLocal()">+</ion-button>
+            </div>
+          </div>
+
+          <div class="versus">
+            <span>VS</span>
+          </div>
+
+          <div class="team-box">
+            <div class="flag">{{ partido.banderaVisitante }}</div>
+            <strong>{{ partido.visitante }}</strong>
+
+            <div class="score-control">
+              <ion-button size="small" fill="clear" (click)="restarVisitante()">−</ion-button>
+              <span>{{ golesVisitante }}</span>
+              <ion-button size="small" fill="clear" (click)="sumarVisitante()">+</ion-button>
+            </div>
+          </div>
+
+        </div>
+
+        <ion-button
+          expand="block"
+          color="danger"
+          [disabled]="!partidoEditable()"
+          (click)="guardarPrediccion()">
+          {{ partidoEditable() ? 'Guardar predicción' : 'Predicción cerrada' }}
+        </ion-button>
+
+        <ion-button
+          *ngIf="tienePrediccionGuardada() && partidoEditable()"
+          expand="block"
+          fill="outline"
+          color="danger"
+          (click)="confirmarEliminarPrediccion()">
+          Eliminar predicción
+        </ion-button>
+
+        <p class="help-text">
+          Puedes editar tu predicción hasta antes del inicio del partido.
+        </p>
+
+      </ion-card-content>
+    </ion-card>
+
+    <h3>Sistema de puntos</h3>
+
+    <ion-card>
+      <ion-card-content>
+        <strong>+10 puntos</strong>
+        <p>Resultado exacto: aciertas el marcador completo.</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-content>
+        <strong>+5 puntos</strong>
+        <p>Ganador o empate correcto: aciertas quién gana o si el partido termina empatado.</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-content>
+        <strong>+3 puntos extra</strong>
+        <p>Diferencia correcta: aciertas por cuántos goles gana el equipo.</p>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-content>
+        <strong>+1 punto por equipo</strong>
+        <p>Acertar los goles de una selección suma 1 punto, aunque no aciertes el resultado.</p>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <ng-template #noPartido>
+    <h2>Partido no encontrado</h2>
+    <p>Vuelve a la lista de partidos e intenta nuevamente.</p>
+    <ion-button routerLink="/tabs/tab2">Volver a partidos</ion-button>
+  </ng-template>
+
+</ion-content>

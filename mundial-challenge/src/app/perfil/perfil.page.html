@@ -1,0 +1,116 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Perfil</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <section class="perfil-hero">
+    <div class="perfil-avatar">
+      {{ usuario.nombre.charAt(0).toUpperCase() }}
+    </div>
+
+    <div class="perfil-info">
+      <h2>{{ usuario.nombre }}</h2>
+      <p>{{ usuario.rol }}</p>
+    </div>
+  </section>
+
+  <div class="perfil-acciones">
+    <ion-button expand="block" color="primary" (click)="editarPerfil()">
+      Editar perfil
+    </ion-button>
+
+    <ion-button expand="block" fill="outline" color="medium" (click)="cerrarSesion()">
+      Cerrar sesión
+    </ion-button>
+
+    <ion-button expand="block" fill="clear" color="danger" (click)="limpiarDatosPrueba()">
+      Restablecer demo
+    </ion-button>
+  </div>
+
+  <h3>Mis estadísticas</h3>
+
+  <div class="perfil-stats">
+    <div class="perfil-stat-card">
+      <small>Puntos</small>
+      <strong>{{ puntosCalculados() }}</strong>
+    </div>
+
+    <div class="perfil-stat-card">
+      <small>Predicciones</small>
+      <strong>{{ cantidadPredicciones() }}</strong>
+    </div>
+
+    <div class="perfil-stat-card">
+      <small>Aciertos</small>
+      <strong>{{ aciertosCalculados() }}</strong>
+    </div>
+
+    <div class="perfil-stat-card">
+      <small>Ligas</small>
+      <strong>{{ cantidadLigas() }}</strong>
+    </div>
+  </div>
+
+  <h3>Mis predicciones</h3>
+
+  <ion-card *ngIf="misPredicciones().length === 0" class="estado-vacio">
+    <ion-card-content>
+      <h4>Aún no tienes predicciones</h4>
+      <p class="subtitulo">Cuando predigas un partido, aparecerá en esta sección.</p>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card class="prediccion-perfil-card" *ngFor="let prediccion of misPredicciones()">
+    <ion-card-content>
+
+      <div class="prediccion-top">
+        <div>
+          <strong>
+            {{ obtenerPartido(prediccion.partidoId)?.local }}
+            vs
+            {{ obtenerPartido(prediccion.partidoId)?.visitante }}
+          </strong>
+
+          <p>
+            {{ obtenerPartido(prediccion.partidoId)?.fecha }} ·
+            {{ obtenerPartido(prediccion.partidoId)?.hora }} ·
+            {{ obtenerPartido(prediccion.partidoId)?.grupo }}
+          </p>
+        </div>
+
+        <ion-badge [color]="partidoEstaFinalizado(prediccion.partidoId) ? 'medium' : 'success'">
+          {{ textoEstadoPartido(prediccion.partidoId) }}
+        </ion-badge>
+      </div>
+
+      <div class="prediccion-marcador">
+        <span>Tu predicción</span>
+        <strong>{{ prediccion.golesLocal }} - {{ prediccion.golesVisitante }}</strong>
+      </div>
+
+      <ion-button
+        *ngIf="!partidoEstaFinalizado(prediccion.partidoId)"
+        expand="block"
+        fill="outline"
+        color="primary"
+        [routerLink]="['/prediccion', prediccion.partidoId]">
+        Editar predicción
+      </ion-button>
+
+      <ion-button
+        *ngIf="partidoEstaFinalizado(prediccion.partidoId)"
+        expand="block"
+        fill="outline"
+        color="primary"
+        (click)="verResultadoPrediccion(prediccion)">
+        Ver resultado
+      </ion-button>
+
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

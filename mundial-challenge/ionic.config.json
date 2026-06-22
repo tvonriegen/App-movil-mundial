@@ -1,0 +1,7 @@
+{
+  "name": "mundial-challenge",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
