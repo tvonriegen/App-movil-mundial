@@ -152,4 +152,18 @@ export class LoginPage {
 
     await toast.present();
   }
+
+  async loginDemoPrueba1() {
+    this.email = 'prueba1@gmail.com';
+    this.password = 'prueba1234';
+
+    await this.iniciarSesion();
+  }
+
+  async loginDemoPrueba2() {
+    this.email = 'prueba2@gmail.com';
+    this.password = 'prueba1234';
+
+    await this.iniciarSesion();
+  }
 }
