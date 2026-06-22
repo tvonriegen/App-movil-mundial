@@ -370,7 +370,10 @@ export class PerfilPage {
               console.error('Error al cerrar sesión en Supabase:', error);
             }
 
-            this.usuarioService.cerrarSesion();
+            this.prediccionesService.limpiarPredicciones();
+            this.ligasService.limpiarLigasGuardadas();
+            this.usuarioService.limpiarUsuarioGuardado();
+
             this.router.navigate(['/login']);
           }
         }

@@ -10,6 +10,22 @@ export interface LigaSupabase {
   created_at?: string;
 }
 
+export interface MiembroLigaSupabase {
+  usuario_id: string;
+  nombre_usuario: string;
+  nombre_visible: string | null;
+}
+
+export interface PrediccionRankingSupabase {
+  id: number;
+  usuario_id: string;
+  partido_id: number;
+  goles_local: number;
+  goles_visitante: number;
+  puntos_obtenidos: number | null;
+  created_at?: string;
+}
+
 export interface ResultadoUnionSupabase {
   estado: 'unido' | 'ya_existe' | 'no_encontrada';
   liga?: LigaSupabase;
@@ -25,27 +41,94 @@ export class LigasSupabaseService {
   ) {}
 
   async obtenerMisLigas(usuarioId: string): Promise<LigaSupabase[]> {
-    const { data, error } = await this.supabaseService.client
+    const { data: membresias, error: errorMembresias } = await this.supabaseService.client
       .from('liga_miembros')
-      .select(`
-        ligas (
-          id,
-          nombre,
-          tipo,
-          codigo,
-          creador_id,
-          created_at
-        )
-      `)
+      .select('liga_id')
       .eq('usuario_id', usuarioId);
+
+    if (errorMembresias) {
+      throw errorMembresias;
+    }
+
+    const idsLigas = (membresias ?? []).map((registro: any) => registro.liga_id);
+
+    if (idsLigas.length === 0) {
+      return [];
+    }
+
+    const { data: ligas, error: errorLigas } = await this.supabaseService.client
+      .from('ligas')
+      .select('*')
+      .in('id', idsLigas)
+      .order('created_at', { ascending: false });
+
+    if (errorLigas) {
+      throw errorLigas;
+    }
+
+    return ligas ?? [];
+  }
+
+  async obtenerLigaPorId(ligaId: number): Promise<LigaSupabase | null> {
+    const { data, error } = await this.supabaseService.client
+      .from('ligas')
+      .select('*')
+      .eq('id', ligaId)
+      .maybeSingle();
 
     if (error) {
       throw error;
     }
 
-    return (data ?? [])
-      .map((registro: any) => registro.ligas)
-      .filter((liga: LigaSupabase | null) => liga !== null);
+    return data;
+  }
+
+  async obtenerMiembrosLiga(ligaId: number): Promise<MiembroLigaSupabase[]> {
+    const { data, error } = await this.supabaseService.client
+      .from('liga_miembros')
+      .select(`
+        usuario_id,
+        usuarios (
+          nombre_usuario,
+          nombre_visible
+        )
+      `)
+      .eq('liga_id', ligaId);
+
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).map((registro: any) => {
+      const usuario = Array.isArray(registro.usuarios)
+        ? registro.usuarios[0]
+        : registro.usuarios;
+
+      return {
+        usuario_id: registro.usuario_id,
+        nombre_usuario: usuario?.nombre_usuario ?? 'Usuario',
+        nombre_visible: usuario?.nombre_visible ?? null
+      };
+    });
+  }
+
+  async obtenerPrediccionesPorUsuarios(
+    usuariosIds: string[]
+  ): Promise<PrediccionRankingSupabase[]> {
+    if (usuariosIds.length === 0) {
+      return [];
+    }
+
+    const { data, error } = await this.supabaseService.client
+      .from('predicciones')
+      .select('*')
+      .in('usuario_id', usuariosIds);
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
   }
 
   async crearLiga(usuarioId: string, nombre: string): Promise<LigaSupabase> {
@@ -74,6 +157,7 @@ export class LigasSupabaseService {
       });
 
     if (errorMiembro) {
+      console.error('La liga se creó, pero falló insertar el miembro:', errorMiembro);
       throw errorMiembro;
     }
 

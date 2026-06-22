@@ -25,8 +25,11 @@ import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 import { AuthSupabaseService } from '../services/auth-supabase';
-import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
-import { adaptarPrediccionesSupabase } from '../adapters/prediccion.adapter';
+import {
+  LigasSupabaseService,
+  MiembroLigaSupabase,
+  PrediccionRankingSupabase
+} from '../services/ligas-supabase';
 
 interface JugadorRanking {
   posicion: number;
@@ -34,6 +37,7 @@ interface JugadorRanking {
   puntos: number;
   avatar: string;
   esUsuario?: boolean;
+  usuarioId?: string;
 }
 
 @Component({
@@ -62,6 +66,9 @@ export class RankingPage {
   partidos: Partido[] = [];
   predicciones: Prediccion[] = [];
 
+  ligaId: number;
+  usuarioActualId: string | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private ligasService: LigasService,
@@ -69,21 +76,20 @@ export class RankingPage {
     private partidosService: PartidosService,
     private partidosSupabaseService: PartidosSupabaseService,
     private authSupabaseService: AuthSupabaseService,
-    private prediccionesSupabaseService: PrediccionesSupabaseService
+    private ligasSupabaseService: LigasSupabaseService
   ) {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.ligaId = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.liga = this.ligasService.obtenerLigaPorId(id);
+    this.liga = this.ligasService.obtenerLigaPorId(this.ligaId);
 
     this.partidos = this.partidosService.obtenerPartidos();
 
     this.predicciones = this.prediccionesService.obtenerPredicciones()
       .filter(prediccion => prediccion.usuarioId === 1);
 
-    this.cargarRanking();
+    this.cargarRankingDemo();
 
-    this.cargarPartidosDesdeSupabase();
-    this.cargarPrediccionesDesdeSupabase();
+    this.cargarDatosRankingDesdeSupabase();
   }
 
   ionViewWillEnter() {
@@ -92,56 +98,20 @@ export class RankingPage {
     this.predicciones = this.prediccionesService.obtenerPredicciones()
       .filter(prediccion => prediccion.usuarioId === 1);
 
-    this.cargarRanking();
+    this.cargarRankingDemo();
 
-    this.cargarPartidosDesdeSupabase();
-    this.cargarPrediccionesDesdeSupabase();
+    this.cargarDatosRankingDesdeSupabase();
   }
 
-  cargarRanking() {
+  cargarRankingDemo() {
     if (!this.liga) {
       return;
     }
 
     const participantesSinPosicion = [
       {
-        nombre: 'Martina',
-        puntos: 42,
-        avatar: 'M'
-      },
-      {
-        nombre: 'Carlos',
-        puntos: 35,
-        avatar: 'C'
-      },
-      {
-        nombre: 'Luis',
-        puntos: 28,
-        avatar: 'L'
-      },
-      {
-        nombre: 'Elena',
-        puntos: 24,
-        avatar: 'E'
-      },
-      {
-        nombre: 'Javier',
-        puntos: 18,
-        avatar: 'J'
-      },
-      {
-        nombre: 'Sofía',
-        puntos: 12,
-        avatar: 'S'
-      },
-      {
-        nombre: 'Laura',
-        puntos: 6,
-        avatar: 'L'
-      },
-      {
         nombre: 'Tú',
-        puntos: this.puntosUsuarioCalculados(),
+        puntos: this.puntosUsuarioCalculadosLocal(),
         avatar: 'T',
         esUsuario: true
       }
@@ -155,7 +125,114 @@ export class RankingPage {
       }));
   }
 
-  puntosUsuarioCalculados(): number {
+  async cargarDatosRankingDesdeSupabase() {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        return;
+      }
+
+      this.usuarioActualId = usuario.id;
+
+      const [partidosSupabase, ligaSupabase, miembros] = await Promise.all([
+        this.partidosSupabaseService.obtenerPartidos(),
+        this.ligasSupabaseService.obtenerLigaPorId(this.ligaId),
+        this.ligasSupabaseService.obtenerMiembrosLiga(this.ligaId)
+      ]);
+
+      this.partidos = adaptarPartidosSupabase(partidosSupabase);
+
+      if (ligaSupabase) {
+        this.liga = {
+          id: ligaSupabase.id,
+          nombre: ligaSupabase.nombre,
+          tipo: ligaSupabase.tipo,
+          codigo: ligaSupabase.codigo ?? undefined,
+          miembros: miembros.length,
+          posicionUsuario: 1,
+          puntosUsuario: 0
+        };
+      }
+
+      const usuariosIds = miembros.map(miembro => miembro.usuario_id);
+
+      const prediccionesSupabase = await this.ligasSupabaseService.obtenerPrediccionesPorUsuarios(
+        usuariosIds
+      );
+
+      this.construirRankingReal(miembros, prediccionesSupabase);
+
+      console.log('Ranking real miembros:', miembros);
+      console.log('Ranking real predicciones:', prediccionesSupabase);
+      console.log('Ranking real calculado:', this.ranking);
+    } catch (error) {
+      console.error('Error al cargar ranking real desde Supabase:', error);
+
+      this.cargarRankingDemo();
+    }
+  }
+
+  construirRankingReal(
+    miembros: MiembroLigaSupabase[],
+    prediccionesSupabase: PrediccionRankingSupabase[]
+  ) {
+    const participantes = miembros.map((miembro) => {
+      const prediccionesUsuario = prediccionesSupabase.filter(
+        prediccion => prediccion.usuario_id === miembro.usuario_id
+      );
+
+      const puntos = this.calcularPuntosUsuarioSupabase(prediccionesUsuario);
+
+      const nombre = miembro.nombre_visible || miembro.nombre_usuario || 'Usuario';
+
+      return {
+        nombre,
+        puntos,
+        avatar: this.obtenerAvatar(nombre),
+        esUsuario: miembro.usuario_id === this.usuarioActualId,
+        usuarioId: miembro.usuario_id
+      };
+    });
+
+    this.ranking = participantes
+      .sort((a, b) => b.puntos - a.puntos)
+      .map((jugador, index) => ({
+        ...jugador,
+        posicion: index + 1
+      }));
+  }
+
+  calcularPuntosUsuarioSupabase(prediccionesUsuario: PrediccionRankingSupabase[]): number {
+    let total = 0;
+
+    for (const partido of this.partidos) {
+      if (partido.estado !== 'finalizado') {
+        continue;
+      }
+
+      const prediccion = prediccionesUsuario.find(
+        prediccionUsuario => prediccionUsuario.partido_id === partido.id
+      );
+
+      if (!prediccion) {
+        continue;
+      }
+
+      const puntos = this.prediccionesService.calcularPuntosPrediccion(
+        prediccion.goles_local,
+        prediccion.goles_visitante,
+        partido.golesLocal ?? 0,
+        partido.golesVisitante ?? 0
+      );
+
+      total += puntos;
+    }
+
+    return total;
+  }
+
+  puntosUsuarioCalculadosLocal(): number {
     let total = 0;
 
     for (const partido of this.partidos) {
@@ -164,7 +241,7 @@ export class RankingPage {
       }
 
       const prediccion = this.predicciones.find(
-        prediccion => prediccion.partidoId === partido.id
+        prediccionLocal => prediccionLocal.partidoId === partido.id
       );
 
       if (!prediccion) {
@@ -204,47 +281,11 @@ export class RankingPage {
     return usuario.puntos;
   }
 
-  async cargarPartidosDesdeSupabase() {
-    try {
-      const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
-
-      this.partidos = adaptarPartidosSupabase(partidosSupabase);
-
-      this.cargarRanking();
-
-      console.log('Ranking cargó partidos desde Supabase:', this.partidos);
-    } catch (error) {
-      console.error('Error al cargar partidos en Ranking desde Supabase:', error);
-
-      this.partidos = this.partidosService.obtenerPartidos();
-      this.cargarRanking();
+  obtenerAvatar(nombre: string): string {
+    if (!nombre || nombre.trim().length === 0) {
+      return 'U';
     }
-  }
 
-  async cargarPrediccionesDesdeSupabase() {
-    try {
-      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
-
-      if (!usuario) {
-        return;
-      }
-
-      const prediccionesSupabase = await this.prediccionesSupabaseService.obtenerMisPredicciones(
-        usuario.id
-      );
-
-      this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
-
-      this.cargarRanking();
-
-      console.log('Ranking cargó predicciones desde Supabase:', this.predicciones);
-    } catch (error) {
-      console.error('Error al cargar predicciones en Ranking desde Supabase:', error);
-
-      this.predicciones = this.prediccionesService.obtenerPredicciones()
-        .filter(prediccion => prediccion.usuarioId === 1);
-
-      this.cargarRanking();
-    }
+    return nombre.trim().charAt(0).toUpperCase();
   }
 }

@@ -60,10 +60,7 @@ export class Tab3Page {
   }
 
   cargarLigas() {
-    // Respaldo local inicial
-    this.ligas = this.ligasService.obtenerLigas();
-
-    // Fuente principal: Supabase
+    this.ligas = [];
     this.cargarLigasDesdeSupabase();
   }
 
@@ -73,6 +70,7 @@ export class Tab3Page {
 
       if (!usuario) {
         console.log('Ligas: no hay usuario Supabase actual');
+        this.ligas = [];
         return;
       }
 
@@ -87,8 +85,7 @@ export class Tab3Page {
       console.log('Ligas adaptadas:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas desde Supabase:', error);
-
-      this.ligas = this.ligasService.obtenerLigas();
+      this.ligas = [];
     }
   }
 
@@ -138,14 +135,8 @@ export class Tab3Page {
               return true;
             } catch (error) {
               console.error('Error al crear liga en Supabase:', error);
-
-              const nuevaLiga = this.ligasService.crearLiga(nombre);
-
-              this.cargarLigas();
-
-              await this.mostrarLigaCreada(nuevaLiga.nombre, nuevaLiga.codigo);
-
-              return true;
+              await this.mostrarErrorCrearLiga();
+              return false;
             }
           }
         }
@@ -163,7 +154,7 @@ export class Tab3Page {
         {
           name: 'codigo',
           type: 'text',
-          placeholder: 'Ej: FAMILIA26'
+          placeholder: 'Ej: LIGA1234'
         }
       ],
       buttons: [
@@ -205,34 +196,14 @@ export class Tab3Page {
 
               if (resultado.estado === 'unido' && resultado.liga) {
                 await this.cargarLigasDesdeSupabase();
-
                 await this.mostrarUnionExitosa(resultado.liga.nombre);
-
                 return true;
               }
 
               return false;
             } catch (error) {
               console.error('Error al unirse a liga en Supabase:', error);
-
-              const resultado = this.ligasService.unirseConCodigo(codigo);
-
-              if (resultado.estado === 'no_encontrada') {
-                await this.mostrarErrorCodigo();
-                return false;
-              }
-
-              if (resultado.estado === 'ya_existe' && resultado.liga) {
-                await this.mostrarYaPertenece(resultado.liga.nombre);
-                return true;
-              }
-
-              if (resultado.estado === 'unido' && resultado.liga) {
-                this.cargarLigas();
-                await this.mostrarUnionExitosa(resultado.liga.nombre);
-                return true;
-              }
-
+              await this.mostrarErrorUnirseLiga();
               return false;
             }
           }
@@ -269,6 +240,26 @@ export class Tab3Page {
     const alert = await this.alertController.create({
       header: 'Código no encontrado',
       message: 'No encontramos una liga con ese código. Revisa que esté bien escrito.',
+      buttons: ['Entendido']
+    });
+
+    await alert.present();
+  }
+
+  async mostrarErrorCrearLiga() {
+    const alert = await this.alertController.create({
+      header: 'No se pudo crear la liga',
+      message: 'Hubo un problema al guardar la liga en Supabase. Revisa la consola.',
+      buttons: ['Entendido']
+    });
+
+    await alert.present();
+  }
+
+  async mostrarErrorUnirseLiga() {
+    const alert = await this.alertController.create({
+      header: 'No se pudo unir a la liga',
+      message: 'Hubo un problema al unirte a la liga. Revisa la consola.',
       buttons: ['Entendido']
     });
 
