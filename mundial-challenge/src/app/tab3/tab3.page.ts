@@ -60,8 +60,10 @@ export class Tab3Page {
   }
 
   cargarLigas() {
+    // Respaldo local inicial
     this.ligas = this.ligasService.obtenerLigas();
 
+    // Fuente principal: Supabase
     this.cargarLigasDesdeSupabase();
   }
 
@@ -70,14 +72,19 @@ export class Tab3Page {
       const usuario = await this.authSupabaseService.obtenerUsuarioActual();
 
       if (!usuario) {
+        console.log('Ligas: no hay usuario Supabase actual');
         return;
       }
 
+      console.log('Ligas usuario Supabase:', usuario.id);
+
       const ligasSupabase = await this.ligasSupabaseService.obtenerMisLigas(usuario.id);
+
+      console.log('Ligas recibidas desde Supabase:', ligasSupabase);
 
       this.ligas = adaptarLigasSupabase(ligasSupabase);
 
-      console.log('Ligas cargadas desde Supabase:', this.ligas);
+      console.log('Ligas adaptadas:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas desde Supabase:', error);
 
@@ -124,10 +131,7 @@ export class Tab3Page {
 
               const nuevaLiga = adaptarLigaSupabase(ligaSupabase);
 
-              this.ligas = [
-                nuevaLiga,
-                ...this.ligas.filter(liga => liga.id !== nuevaLiga.id)
-              ];
+              await this.cargarLigasDesdeSupabase();
 
               await this.mostrarLigaCreada(nuevaLiga.nombre, nuevaLiga.codigo);
 
@@ -194,17 +198,13 @@ export class Tab3Page {
               }
 
               if (resultado.estado === 'ya_existe' && resultado.liga) {
+                await this.cargarLigasDesdeSupabase();
                 await this.mostrarYaPertenece(resultado.liga.nombre);
                 return true;
               }
 
               if (resultado.estado === 'unido' && resultado.liga) {
-                const ligaAdaptada = adaptarLigaSupabase(resultado.liga);
-
-                this.ligas = [
-                  ligaAdaptada,
-                  ...this.ligas.filter(liga => liga.id !== ligaAdaptada.id)
-                ];
+                await this.cargarLigasDesdeSupabase();
 
                 await this.mostrarUnionExitosa(resultado.liga.nombre);
 
