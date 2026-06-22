@@ -69,7 +69,6 @@ export class Tab3Page {
       const usuario = await this.authSupabaseService.obtenerUsuarioActual();
 
       if (!usuario) {
-        console.log('Ligas: no hay usuario Supabase actual');
         this.ligas = [];
         return;
       }
@@ -91,7 +90,6 @@ export class Tab3Page {
 
       this.ligas = ligasConMiembros;
 
-      console.log('Ligas finales con miembros reales:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas desde Supabase:', error);
       this.ligas = [];

@@ -175,7 +175,6 @@ export class Tab2Page {
 
       this.partidos = adaptarPartidosSupabase(partidosSupabase);
 
-      console.log('Partidos cargados desde Supabase:', this.partidos);
     } catch (error) {
       console.error('Error al cargar partidos desde Supabase:', error);
 
@@ -197,7 +196,6 @@ export class Tab2Page {
 
       this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
 
-      console.log('Partidos cargó predicciones desde Supabase:', this.predicciones);
     } catch (error) {
       console.error('Error al cargar predicciones en Partidos desde Supabase:', error);
 

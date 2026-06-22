@@ -7,7 +7,7 @@ export function adaptarLigaSupabase(liga: LigaSupabase): Liga {
     nombre: liga.nombre,
     tipo: liga.tipo,
     codigo: liga.codigo ?? undefined,
-    miembros: 1,
+    miembros: liga.miembros_count ?? 0,
     posicionUsuario: 1,
     puntosUsuario: 0
   };

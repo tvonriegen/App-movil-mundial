@@ -163,9 +163,6 @@ export class RankingPage {
 
       this.construirRankingReal(miembros, prediccionesSupabase);
 
-      console.log('Ranking real miembros:', miembros);
-      console.log('Ranking real predicciones:', prediccionesSupabase);
-      console.log('Ranking real calculado:', this.ranking);
     } catch (error) {
       console.error('Error al cargar ranking real desde Supabase:', error);
 

@@ -257,7 +257,6 @@ export class PrediccionPage {
 
       this.partido = adaptarPartidoSupabase(partidoSupabase);
 
-      console.log('Predicción cargó partido desde Supabase:', this.partido);
     } catch (error) {
       console.error('Error al cargar partido desde Supabase:', error);
 
@@ -289,7 +288,6 @@ export class PrediccionPage {
       this.golesVisitante = prediccion.goles_visitante;
       this.prediccionCargadaDesdeSupabase = true;
 
-      console.log('Predicción cargada desde Supabase:', prediccion);
     } catch (error) {
       console.error('Error al cargar predicción desde Supabase:', error);
     }

@@ -188,7 +188,6 @@ export class Tab1Page {
       this.usuarioService.actualizarPerfil(nombre, rol);
       this.usuario = this.usuarioService.obtenerUsuario();
 
-      console.log('Inicio cargó perfil desde Supabase:', perfil);
     } catch (error) {
       console.error('Error al cargar perfil en Inicio desde Supabase:', error);
     }
@@ -200,7 +199,6 @@ export class Tab1Page {
 
       this.partidos = adaptarPartidosSupabase(partidosSupabase);
 
-      console.log('Inicio cargó partidos desde Supabase:', this.partidos);
     } catch (error) {
       console.error('Error al cargar partidos en Inicio desde Supabase:', error);
 
@@ -222,7 +220,6 @@ export class Tab1Page {
 
       this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
 
-      console.log('Inicio cargó predicciones desde Supabase:', this.predicciones);
     } catch (error) {
       console.error('Error al cargar predicciones en Inicio desde Supabase:', error);
 
@@ -258,7 +255,6 @@ export class Tab1Page {
 
       this.ligas = ligasConMiembros;
 
-      console.log('Inicio cargó ligas con miembros reales:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas en Inicio desde Supabase:', error);
 

@@ -124,7 +124,6 @@ export class PerfilPage {
       this.usuarioService.actualizarPerfil(nombre, rol);
       this.usuario = this.usuarioService.obtenerUsuario();
 
-      console.log('Perfil cargó usuario desde Supabase:', perfil);
     } catch (error) {
       console.error('Error al cargar perfil desde Supabase:', error);
     }
@@ -136,7 +135,6 @@ export class PerfilPage {
 
       this.partidos = adaptarPartidosSupabase(partidosSupabase);
 
-      console.log('Perfil cargó partidos desde Supabase:', this.partidos);
     } catch (error) {
       console.error('Error al cargar partidos en Perfil desde Supabase:', error);
 
@@ -149,7 +147,6 @@ export class PerfilPage {
       const usuario = await this.authSupabaseService.obtenerUsuarioActual();
 
       if (!usuario) {
-        console.log('Perfil: no hay usuario Supabase actual');
         return;
       }
 
@@ -159,7 +156,6 @@ export class PerfilPage {
 
       this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
 
-      console.log('Perfil cargó predicciones desde Supabase:', this.predicciones);
     } catch (error) {
       console.error('Error al cargar predicciones en Perfil desde Supabase:', error);
 
@@ -196,7 +192,6 @@ export class PerfilPage {
 
       this.ligas = ligasConMiembros;
 
-      console.log('Perfil cargó ligas desde Supabase:', this.ligas);
     } catch (error) {
       console.error('Error al cargar ligas en Perfil desde Supabase:', error);
       this.ligas = [];
