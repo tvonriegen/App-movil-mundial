@@ -17,6 +17,7 @@ import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
 import { PrediccionesService } from '../services/predicciones';
 import { PartidosSupabaseService } from '../services/partidos-supabase';
+import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 @Component({
   selector: 'app-tab2',
@@ -49,7 +50,7 @@ export class Tab2Page {
   ) {
     this.partidos = this.partidosService.obtenerPartidos();
 
-    this.probarConexionSupabase();
+    this.cargarPartidosDesdeSupabase();
   }
 
   tienePrediccion(partidoId: number): boolean {
@@ -125,13 +126,17 @@ export class Tab2Page {
     return this.partidos;
   }
 
-  async probarConexionSupabase() {
+  async cargarPartidosDesdeSupabase() {
     try {
       const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
 
-      console.log('Partidos desde Supabase:', partidosSupabase);
+      this.partidos = adaptarPartidosSupabase(partidosSupabase);
+
+      console.log('Partidos cargados desde Supabase:', this.partidos);
     } catch (error) {
-      console.error('Error al leer partidos desde Supabase:', error);
+      console.error('Error al cargar partidos desde Supabase:', error);
+
+      this.partidos = this.partidosService.obtenerPartidos();
     }
   }
 }

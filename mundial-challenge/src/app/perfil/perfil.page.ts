@@ -11,15 +11,22 @@ import {
   IonBadge,
   AlertController
 } from '@ionic/angular/standalone';
+
+import { RouterModule, Router } from '@angular/router';
+
 import { UsuarioService } from '../services/usuario';
 import { Usuario } from '../models/usuario.model';
+
 import { PrediccionesService } from '../services/predicciones';
-import { LigasService } from '../services/ligas';
-import { PartidosService } from '../services/partidos';
 import { Prediccion } from '../models/prediccion.model';
+
+import { LigasService } from '../services/ligas';
+
+import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
-import { RouterModule } from '@angular/router';
-import { Router } from '@angular/router';
+
+import { PartidosSupabaseService } from '../services/partidos-supabase';
+import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 @Component({
   selector: 'app-perfil',
@@ -41,6 +48,7 @@ import { Router } from '@angular/router';
 })
 export class PerfilPage {
   usuario: Usuario;
+  partidos: Partido[] = [];
 
   constructor(
     private usuarioService: UsuarioService,
@@ -48,17 +56,101 @@ export class PerfilPage {
     private ligasService: LigasService,
     private partidosService: PartidosService,
     private alertController: AlertController,
-    private router: Router
+    private router: Router,
+    private partidosSupabaseService: PartidosSupabaseService
   ) {
     this.usuario = this.usuarioService.obtenerUsuario();
+
+    // Respaldo local inicial por si Supabase falla
+    this.partidos = this.partidosService.obtenerPartidos();
+
+    // Luego intenta cargar desde Supabase
+    this.cargarPartidosDesdeSupabase();
+  }
+
+  async cargarPartidosDesdeSupabase() {
+    try {
+      const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
+
+      this.partidos = adaptarPartidosSupabase(partidosSupabase);
+
+      console.log('Perfil cargó partidos desde Supabase:', this.partidos);
+    } catch (error) {
+      console.error('Error al cargar partidos en Perfil desde Supabase:', error);
+
+      this.partidos = this.partidosService.obtenerPartidos();
+    }
   }
 
   cantidadPredicciones(): number {
-    return this.prediccionesService.obtenerPredicciones().length;
+    return this.prediccionesService.obtenerPredicciones()
+      .filter(prediccion => prediccion.usuarioId === this.usuario.id)
+      .length;
   }
 
   cantidadLigas(): number {
     return this.ligasService.obtenerLigas().length;
+  }
+
+  puntosCalculados(): number {
+    return this.prediccionesService.obtenerPuntosTotales(
+      this.partidos,
+      this.usuario.id
+    );
+  }
+
+  aciertosCalculados(): number {
+    return this.prediccionesService.obtenerAciertosExactos(
+      this.partidos,
+      this.usuario.id
+    );
+  }
+
+  obtenerPartido(partidoId: number): Partido | undefined {
+    return this.partidos.find(partido => partido.id === partidoId);
+  }
+
+  misPredicciones(): Prediccion[] {
+    return this.prediccionesService.obtenerPredicciones()
+      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
+  }
+
+  textoEstadoPartido(partidoId: number): string {
+    const partido = this.obtenerPartido(partidoId);
+
+    if (!partido) {
+      return 'Partido no encontrado';
+    }
+
+    if (partido.estado === 'finalizado') {
+      return 'Finalizado';
+    }
+
+    if (partido.estado === 'en_vivo') {
+      return 'En vivo';
+    }
+
+    return 'Pendiente';
+  }
+
+  puntosPrediccion(prediccion: Prediccion): number | null {
+    const partido = this.obtenerPartido(prediccion.partidoId);
+
+    if (!partido || partido.estado !== 'finalizado') {
+      return null;
+    }
+
+    return this.prediccionesService.calcularPuntosPrediccion(
+      prediccion.golesLocal,
+      prediccion.golesVisitante,
+      partido.golesLocal ?? 0,
+      partido.golesVisitante ?? 0
+    );
+  }
+
+  partidoEstaFinalizado(partidoId: number): boolean {
+    const partido = this.obtenerPartido(partidoId);
+    return partido?.estado === 'finalizado';
   }
 
   async editarPerfil() {
@@ -103,67 +195,6 @@ export class PerfilPage {
     });
 
     await alert.present();
-  }
-
-  puntosCalculados(): number {
-    return this.prediccionesService.obtenerPuntosTotales(
-      this.partidosService.obtenerPartidos(),
-      this.usuario.id
-    );
-  }
-
-  aciertosCalculados(): number {
-    return this.prediccionesService.obtenerAciertosExactos(
-      this.partidosService.obtenerPartidos(),
-      this.usuario.id
-    );
-  }
-
-  obtenerPartido(partidoId: number): Partido | undefined {
-    return this.partidosService.obtenerPartidoPorId(partidoId);
-  }
-
-  misPredicciones(): Prediccion[] {
-    return this.prediccionesService.obtenerPredicciones()
-      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
-  }
-
-  textoEstadoPartido(partidoId: number): string {
-    const partido = this.obtenerPartido(partidoId);
-
-    if (!partido) {
-      return 'Partido no encontrado';
-    }
-
-    if (partido.estado === 'finalizado') {
-      return 'Finalizado';
-    }
-
-    if (partido.estado === 'en_vivo') {
-      return 'En vivo';
-    }
-
-    return 'Pendiente';
-  }
-
-  puntosPrediccion(prediccion: Prediccion): number | null {
-    const partido = this.obtenerPartido(prediccion.partidoId);
-
-    if (!partido || partido.estado !== 'finalizado') {
-      return null;
-    }
-
-    return this.prediccionesService.calcularPuntosPrediccion(
-      prediccion.golesLocal,
-      prediccion.golesVisitante,
-      partido.golesLocal ?? 0,
-      partido.golesVisitante ?? 0
-    );
-  }
-
-  partidoEstaFinalizado(partidoId: number): boolean {
-    const partido = this.obtenerPartido(partidoId);
-    return partido?.estado === 'finalizado';
   }
 
   async verResultadoPrediccion(prediccion: Prediccion) {
@@ -227,7 +258,7 @@ export class PerfilPage {
           role: 'cancel'
         },
         {
-          text: 'Limpiar',
+          text: 'Restablecer',
           role: 'destructive',
           handler: () => {
             this.prediccionesService.limpiarPredicciones();

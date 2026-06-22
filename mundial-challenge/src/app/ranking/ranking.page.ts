@@ -17,6 +17,9 @@ import { LigasService } from '../services/ligas';
 import { PrediccionesService } from '../services/predicciones';
 import { PartidosService } from '../services/partidos';
 import { Liga } from '../models/liga.model';
+import { Partido } from '../models/partido.model';
+import { PartidosSupabaseService } from '../services/partidos-supabase';
+import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 interface JugadorRanking {
   posicion: number;
@@ -48,18 +51,23 @@ interface JugadorRanking {
 export class RankingPage {
   liga?: Liga;
   ranking: JugadorRanking[] = [];
+  partidos: Partido[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private ligasService: LigasService,
     private prediccionesService: PrediccionesService,
-    private partidosService: PartidosService
+    private partidosService: PartidosService,
+    private partidosSupabaseService: PartidosSupabaseService
   ) {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
     this.liga = this.ligasService.obtenerLigaPorId(id);
 
+    this.partidos = this.partidosService.obtenerPartidos();
     this.cargarRanking();
+
+    this.cargarPartidosDesdeSupabase();
   }
 
   cargarRanking() {
@@ -120,10 +128,9 @@ export class RankingPage {
   }
 
   puntosUsuarioCalculados(): number {
-    const partidos = this.partidosService.obtenerPartidos();
     let total = 0;
 
-    for (const partido of partidos) {
+    for (const partido of this.partidos) {
       if (partido.estado !== 'finalizado') {
         continue;
       }
@@ -165,5 +172,22 @@ export class RankingPage {
     }
 
     return usuario.puntos;
+  }
+
+  async cargarPartidosDesdeSupabase() {
+    try {
+      const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
+
+      this.partidos = adaptarPartidosSupabase(partidosSupabase);
+
+      this.cargarRanking();
+
+      console.log('Ranking cargó partidos desde Supabase:', this.partidos);
+    } catch (error) {
+      console.error('Error al cargar partidos en Ranking desde Supabase:', error);
+
+      this.partidos = this.partidosService.obtenerPartidos();
+      this.cargarRanking();
+    }
   }
 }

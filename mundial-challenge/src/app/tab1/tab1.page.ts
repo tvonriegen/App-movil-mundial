@@ -9,6 +9,8 @@ import { LigasService } from '../services/ligas';
 import { Liga } from '../models/liga.model';
 import { UsuarioService } from '../services/usuario';
 import { Usuario } from '../models/usuario.model';
+import { PartidosSupabaseService } from '../services/partidos-supabase';
+import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 
 @Component({
   selector: 'app-tab1',
@@ -39,11 +41,14 @@ export class Tab1Page {
     private partidosService: PartidosService,
     private prediccionesService: PrediccionesService,
     private ligasService: LigasService,
-    private usuarioService: UsuarioService
+    private usuarioService: UsuarioService,
+    private partidosSupabaseService: PartidosSupabaseService
   ) {
+    this.usuario = this.usuarioService.obtenerUsuario();
     this.partidos = this.partidosService.obtenerPartidos();
     this.ligas = this.ligasService.obtenerLigas();
-    this.usuario = this.usuarioService.obtenerUsuario();
+
+    this.cargarPartidosDesdeSupabase();
   }
 
   get partidoDestacado(): Partido | undefined {
@@ -78,5 +83,19 @@ export class Tab1Page {
     return this.partidos
       .filter(partido => partido.estado === 'pendiente')
       .slice(0, 3);
-  }   
+  }
+  
+  async cargarPartidosDesdeSupabase() {
+    try {
+      const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
+
+      this.partidos = adaptarPartidosSupabase(partidosSupabase);
+
+      console.log('Inicio cargó partidos desde Supabase:', this.partidos);
+    } catch (error) {
+      console.error('Error al cargar partidos en Inicio desde Supabase:', error);
+
+      this.partidos = this.partidosService.obtenerPartidos();
+    }
+  }
 }

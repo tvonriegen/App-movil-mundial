@@ -18,6 +18,8 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
+import { PartidosSupabaseService } from '../services/partidos-supabase';
+import { adaptarPartidoSupabase } from '../adapters/partido.adapter';
 
 @Component({
   selector: 'app-prediccion',
@@ -50,9 +52,11 @@ export class PrediccionPage {
     private partidosService: PartidosService,
     private prediccionesService: PrediccionesService,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private partidosSupabaseService: PartidosSupabaseService
   ) {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+
     this.partido = this.partidosService.obtenerPartidoPorId(id);
 
     const prediccionExistente = this.prediccionesService.obtenerPrediccionPorPartido(id, 1);
@@ -61,6 +65,8 @@ export class PrediccionPage {
       this.golesLocal = prediccionExistente.golesLocal;
       this.golesVisitante = prediccionExistente.golesVisitante;
     }
+
+    this.cargarPartidoDesdeSupabase(id);
   }
 
   sumarLocal() {
@@ -196,5 +202,23 @@ export class PrediccionPage {
     });
 
     await toast.present();
+  }
+
+  async cargarPartidoDesdeSupabase(id: number) {
+    try {
+      const partidoSupabase = await this.partidosSupabaseService.obtenerPartidoPorId(id);
+
+      if (!partidoSupabase) {
+        return;
+      }
+
+      this.partido = adaptarPartidoSupabase(partidoSupabase);
+
+      console.log('Predicción cargó partido desde Supabase:', this.partido);
+    } catch (error) {
+      console.error('Error al cargar partido desde Supabase:', error);
+
+      this.partido = this.partidosService.obtenerPartidoPorId(id);
+    }
   }
 }
