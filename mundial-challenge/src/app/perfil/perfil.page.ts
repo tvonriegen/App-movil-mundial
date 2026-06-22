@@ -28,6 +28,8 @@ import { Partido } from '../models/partido.model';
 import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 import { AuthSupabaseService } from '../services/auth-supabase';
+import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
+import { adaptarPrediccionesSupabase } from '../adapters/prediccion.adapter';
 
 @Component({
   selector: 'app-perfil',
@@ -50,6 +52,7 @@ import { AuthSupabaseService } from '../services/auth-supabase';
 export class PerfilPage {
   usuario: Usuario;
   partidos: Partido[] = [];
+  predicciones: Prediccion[] = [];
 
   constructor(
     private usuarioService: UsuarioService,
@@ -59,15 +62,31 @@ export class PerfilPage {
     private alertController: AlertController,
     private router: Router,
     private partidosSupabaseService: PartidosSupabaseService,
-    private authSupabaseService: AuthSupabaseService
+    private authSupabaseService: AuthSupabaseService,
+    private prediccionesSupabaseService: PrediccionesSupabaseService
   ) {
     this.usuario = this.usuarioService.obtenerUsuario();
 
     // Respaldo local inicial por si Supabase falla
     this.partidos = this.partidosService.obtenerPartidos();
+    this.predicciones = this.prediccionesService.obtenerPredicciones()
+      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
 
     // Luego intenta cargar desde Supabase
     this.cargarPartidosDesdeSupabase();
+    this.cargarPrediccionesDesdeSupabase();
+  }
+
+  ionViewWillEnter() {
+    this.usuario = this.usuarioService.obtenerUsuario();
+
+    this.partidos = this.partidosService.obtenerPartidos();
+
+    this.predicciones = this.prediccionesService.obtenerPredicciones()
+      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
+
+    this.cargarPartidosDesdeSupabase();
+    this.cargarPrediccionesDesdeSupabase();
   }
 
   async cargarPartidosDesdeSupabase() {
@@ -85,9 +104,7 @@ export class PerfilPage {
   }
 
   cantidadPredicciones(): number {
-    return this.prediccionesService.obtenerPredicciones()
-      .filter(prediccion => prediccion.usuarioId === this.usuario.id)
-      .length;
+    return this.predicciones.length;
   }
 
   cantidadLigas(): number {
@@ -95,17 +112,47 @@ export class PerfilPage {
   }
 
   puntosCalculados(): number {
-    return this.prediccionesService.obtenerPuntosTotales(
-      this.partidos,
-      this.usuario.id
-    );
+    let total = 0;
+
+    for (const prediccion of this.predicciones) {
+      const partido = this.obtenerPartido(prediccion.partidoId);
+
+      if (!partido || partido.estado !== 'finalizado') {
+        continue;
+      }
+
+      const puntos = this.prediccionesService.calcularPuntosPrediccion(
+        prediccion.golesLocal,
+        prediccion.golesVisitante,
+        partido.golesLocal ?? 0,
+        partido.golesVisitante ?? 0
+      );
+
+      total += puntos;
+    }
+
+    return total;
   }
 
   aciertosCalculados(): number {
-    return this.prediccionesService.obtenerAciertosExactos(
-      this.partidos,
-      this.usuario.id
-    );
+    let total = 0;
+
+    for (const prediccion of this.predicciones) {
+      const partido = this.obtenerPartido(prediccion.partidoId);
+
+      if (!partido || partido.estado !== 'finalizado') {
+        continue;
+      }
+
+      if (
+        prediccion.golesLocal === partido.golesLocal &&
+        prediccion.golesVisitante === partido.golesVisitante
+      ) {
+        total++;
+      }
+    }
+
+    return total;
   }
 
   obtenerPartido(partidoId: number): Partido | undefined {
@@ -113,8 +160,7 @@ export class PerfilPage {
   }
 
   misPredicciones(): Prediccion[] {
-    return this.prediccionesService.obtenerPredicciones()
-      .filter(prediccion => prediccion.usuarioId === this.usuario.id);
+    return this.predicciones;
   }
 
   textoEstadoPartido(partidoId: number): string {
@@ -286,5 +332,33 @@ export class PerfilPage {
     });
 
     await alert.present();
+  }
+
+  async cargarPrediccionesDesdeSupabase() {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        console.log('Perfil: no hay usuario Supabase actual');
+        return;
+      }
+
+      console.log('Perfil usuario Supabase:', usuario.id);
+
+      const prediccionesSupabase = await this.prediccionesSupabaseService.obtenerMisPredicciones(
+        usuario.id
+      );
+
+      console.log('Predicciones recibidas desde Supabase:', prediccionesSupabase);
+
+      this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
+
+      console.log('Perfil cargó predicciones adaptadas:', this.predicciones);
+    } catch (error) {
+      console.error('Error al cargar predicciones en Perfil desde Supabase:', error);
+
+      this.predicciones = this.prediccionesService.obtenerPredicciones()
+        .filter(prediccion => prediccion.usuarioId === this.usuario.id);
+    }
   }
 }

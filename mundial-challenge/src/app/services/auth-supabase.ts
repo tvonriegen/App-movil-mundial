@@ -44,23 +44,23 @@ export class AuthSupabaseService {
     }
   }
 
-  async obtenerUsuarioActual() {
-    const { data, error } = await this.supabaseService.client.auth.getUser();
-
-    if (error) {
-      return null;
-    }
-
-    return data.user;
-  }
-
   async obtenerSesionActual() {
     const { data, error } = await this.supabaseService.client.auth.getSession();
 
     if (error) {
-      return null;
+      throw error;
     }
 
     return data.session;
+  }
+
+  async obtenerUsuarioActual() {
+    const { data, error } = await this.supabaseService.client.auth.getUser();
+
+    if (error) {
+      throw error;
+    }
+
+    return data.user;
   }
 }

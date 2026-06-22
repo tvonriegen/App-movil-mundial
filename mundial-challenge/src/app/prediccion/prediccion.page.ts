@@ -20,6 +20,8 @@ import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
 import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidoSupabase } from '../adapters/partido.adapter';
+import { AuthSupabaseService } from '../services/auth-supabase';
+import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
 
 @Component({
   selector: 'app-prediccion',
@@ -42,9 +44,11 @@ import { adaptarPartidoSupabase } from '../adapters/partido.adapter';
 })
 export class PrediccionPage {
   partido?: Partido;
-
   golesLocal = 0;
   golesVisitante = 0;
+
+  usuarioSupabaseId: string | null = null;
+  prediccionCargadaDesdeSupabase = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -53,7 +57,9 @@ export class PrediccionPage {
     private prediccionesService: PrediccionesService,
     private alertController: AlertController,
     private toastController: ToastController,
-    private partidosSupabaseService: PartidosSupabaseService
+    private partidosSupabaseService: PartidosSupabaseService,
+    private authSupabaseService: AuthSupabaseService,
+    private prediccionesSupabaseService: PrediccionesSupabaseService
   ) {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
@@ -67,6 +73,7 @@ export class PrediccionPage {
     }
 
     this.cargarPartidoDesdeSupabase(id);
+    this.cargarPrediccionDesdeSupabase(id);
   }
 
   sumarLocal() {
@@ -105,10 +112,65 @@ export class PrediccionPage {
     }
   }
 
+  partidoEditable(): boolean {
+    return this.partido?.estado === 'pendiente';
+  }
+
+  tienePrediccionGuardada(): boolean {
+    if (!this.partido) {
+      return false;
+    }
+
+    return this.prediccionCargadaDesdeSupabase ||
+      this.prediccionesService.existePrediccion(this.partido.id, 1);
+  }
+
   async guardarPrediccion() {
-    if (!this.partido || !this.partidoEditable()) {
+    if (!this.partido) {
       return;
     }
+
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        await this.mostrarPrediccionError('No se pudo obtener el usuario actual.');
+        return;
+      }
+
+      this.usuarioSupabaseId = usuario.id;
+
+      await this.prediccionesSupabaseService.guardarPrediccion(
+        usuario.id,
+        this.partido.id,
+        this.golesLocal,
+        this.golesVisitante
+      );
+
+      this.prediccionCargadaDesdeSupabase = true;
+
+      this.guardarPrediccionLocal();
+
+      await this.mostrarPrediccionGuardada();
+
+      this.volverAPartidosConRefresh();
+    } catch (error) {
+      console.error('Error al guardar predicción en Supabase:', error);
+
+      this.guardarPrediccionLocal();
+
+      await this.mostrarPrediccionGuardada();
+
+      this.volverAPartidosConRefresh();
+    }
+  }
+
+  guardarPrediccionLocal() {
+    if (!this.partido) {
+      return;
+    }
+
+    this.prediccionesService.eliminarPrediccion(this.partido.id, 1);
 
     this.prediccionesService.guardarPrediccion({
       id: Date.now(),
@@ -118,22 +180,6 @@ export class PrediccionPage {
       golesVisitante: this.golesVisitante,
       fechaCreacion: new Date().toISOString()
     });
-
-    await this.mostrarPrediccionGuardada();
-
-    this.router.navigate(['/tabs/tab2']);
-  }
-  
-  partidoEditable(): boolean {
-    return this.partido?.estado === 'pendiente';
-  }
-  
-  tienePrediccionGuardada(): boolean {
-    if (!this.partido) {
-      return false;
-    }
-
-    return this.prediccionesService.existePrediccion(this.partido.id, 1);
   }
 
   async confirmarEliminarPrediccion() {
@@ -167,11 +213,86 @@ export class PrediccionPage {
       return;
     }
 
-    this.prediccionesService.eliminarPrediccion(this.partido.id, 1);
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
 
-    await this.mostrarPrediccionEliminada();
+      if (usuario) {
+        await this.prediccionesSupabaseService.eliminarPrediccion(
+          usuario.id,
+          this.partido.id
+        );
+      }
 
-    this.router.navigate(['/tabs/tab2']);
+      this.prediccionCargadaDesdeSupabase = false;
+
+      this.prediccionesService.eliminarPrediccion(this.partido.id, 1);
+
+      await this.mostrarPrediccionEliminada();
+
+      this.volverAPartidosConRefresh();
+    } catch (error) {
+      console.error('Error al eliminar predicción en Supabase:', error);
+
+      this.prediccionCargadaDesdeSupabase = false;
+
+      this.prediccionesService.eliminarPrediccion(this.partido.id, 1);
+
+      await this.mostrarPrediccionEliminada();
+
+      this.volverAPartidosConRefresh();
+    }
+  }
+
+  volverAPartidosConRefresh() {
+    this.router.navigateByUrl('/tabs/tab2?refresh=' + Date.now());
+  }
+
+  async cargarPartidoDesdeSupabase(id: number) {
+    try {
+      const partidoSupabase = await this.partidosSupabaseService.obtenerPartidoPorId(id);
+
+      if (!partidoSupabase) {
+        return;
+      }
+
+      this.partido = adaptarPartidoSupabase(partidoSupabase);
+
+      console.log('Predicción cargó partido desde Supabase:', this.partido);
+    } catch (error) {
+      console.error('Error al cargar partido desde Supabase:', error);
+
+      this.partido = this.partidosService.obtenerPartidoPorId(id);
+    }
+  }
+
+  async cargarPrediccionDesdeSupabase(partidoId: number) {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        return;
+      }
+
+      this.usuarioSupabaseId = usuario.id;
+
+      const prediccion = await this.prediccionesSupabaseService.obtenerPrediccionPorPartido(
+        usuario.id,
+        partidoId
+      );
+
+      if (!prediccion) {
+        this.prediccionCargadaDesdeSupabase = false;
+        return;
+      }
+
+      this.golesLocal = prediccion.goles_local;
+      this.golesVisitante = prediccion.goles_visitante;
+      this.prediccionCargadaDesdeSupabase = true;
+
+      console.log('Predicción cargada desde Supabase:', prediccion);
+    } catch (error) {
+      console.error('Error al cargar predicción desde Supabase:', error);
+    }
   }
 
   async mostrarPrediccionGuardada() {
@@ -204,21 +325,14 @@ export class PrediccionPage {
     await toast.present();
   }
 
-  async cargarPartidoDesdeSupabase(id: number) {
-    try {
-      const partidoSupabase = await this.partidosSupabaseService.obtenerPartidoPorId(id);
+  async mostrarPrediccionError(mensaje: string) {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2200,
+      position: 'bottom',
+      color: 'danger'
+    });
 
-      if (!partidoSupabase) {
-        return;
-      }
-
-      this.partido = adaptarPartidoSupabase(partidoSupabase);
-
-      console.log('Predicción cargó partido desde Supabase:', this.partido);
-    } catch (error) {
-      console.error('Error al cargar partido desde Supabase:', error);
-
-      this.partido = this.partidosService.obtenerPartidoPorId(id);
-    }
+    await toast.present();
   }
 }

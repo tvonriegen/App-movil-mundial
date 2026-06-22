@@ -2,11 +2,14 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase';
 
 export interface PrediccionSupabase {
-  id?: number;
+  id: number;
   usuario_id: string;
   partido_id: number;
+
   goles_local: number;
   goles_visitante: number;
+
+  puntos_obtenidos: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -20,7 +23,7 @@ export class PrediccionesSupabaseService {
     private supabaseService: SupabaseService
   ) {}
 
-  async obtenerPrediccionesUsuario(usuarioId: string): Promise<PrediccionSupabase[]> {
+  async obtenerMisPredicciones(usuarioId: string): Promise<PrediccionSupabase[]> {
     const { data, error } = await this.supabaseService.client
       .from('predicciones')
       .select('*')
@@ -57,7 +60,7 @@ export class PrediccionesSupabaseService {
     partidoId: number,
     golesLocal: number,
     golesVisitante: number
-  ): Promise<PrediccionSupabase | null> {
+  ): Promise<PrediccionSupabase> {
     const { data, error } = await this.supabaseService.client
       .from('predicciones')
       .upsert(
@@ -95,13 +98,5 @@ export class PrediccionesSupabaseService {
     if (error) {
       throw error;
     }
-  }
-
-  async existePrediccion(
-    usuarioId: string,
-    partidoId: number
-  ): Promise<boolean> {
-    const prediccion = await this.obtenerPrediccionPorPartido(usuarioId, partidoId);
-    return prediccion !== null;
   }
 }

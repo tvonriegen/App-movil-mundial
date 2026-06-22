@@ -12,17 +12,26 @@ import {
   AlertController
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+
 import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
+
 import { PrediccionesService } from '../services/predicciones';
+import { Prediccion } from '../models/prediccion.model';
+
 import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
+
+import { AuthSupabaseService } from '../services/auth-supabase';
+import { PrediccionesSupabaseService } from '../services/predicciones-supabase';
+import { adaptarPrediccionesSupabase } from '../adapters/prediccion.adapter';
 
 @Component({
   selector: 'app-tab2',
   templateUrl: 'tab2.page.html',
   styleUrls: ['tab2.page.scss'],
+  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
@@ -40,25 +49,46 @@ import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
 })
 export class Tab2Page {
   partidos: Partido[] = [];
+  predicciones: Prediccion[] = [];
+
   filtroActual: 'hoy' | 'proximos' | 'grupos' = 'hoy';
 
   constructor(
     private partidosService: PartidosService,
     private prediccionesService: PrediccionesService,
     private alertController: AlertController,
-    private partidosSupabaseService: PartidosSupabaseService
+    private partidosSupabaseService: PartidosSupabaseService,
+    private authSupabaseService: AuthSupabaseService,
+    private prediccionesSupabaseService: PrediccionesSupabaseService,
+    private route: ActivatedRoute
   ) {
+    this.actualizarDatosPantalla();
+
+    this.route.queryParams.subscribe(() => {
+      this.actualizarDatosPantalla();
+    });
+  }
+
+  ionViewWillEnter() {
+    this.actualizarDatosPantalla();
+  }
+
+  actualizarDatosPantalla() {
     this.partidos = this.partidosService.obtenerPartidos();
 
+    this.predicciones = this.prediccionesService.obtenerPredicciones()
+      .filter(prediccion => prediccion.usuarioId === 1);
+
     this.cargarPartidosDesdeSupabase();
+    this.cargarPrediccionesDesdeSupabase();
   }
 
   tienePrediccion(partidoId: number): boolean {
-    return this.prediccionesService.existePrediccion(partidoId, 1);
+    return this.obtenerPrediccionMasReciente(partidoId) !== undefined;
   }
 
   textoPrediccion(partidoId: number): string {
-    const prediccion = this.prediccionesService.obtenerPrediccionPorPartido(partidoId, 1);
+    const prediccion = this.obtenerPrediccionMasReciente(partidoId);
 
     if (!prediccion) {
       return '';
@@ -67,8 +97,21 @@ export class Tab2Page {
     return `${prediccion.golesLocal} - ${prediccion.golesVisitante}`;
   }
 
+  obtenerPrediccionMasReciente(partidoId: number): Prediccion | undefined {
+    const prediccionesPartido = this.predicciones
+      .filter(prediccion => prediccion.partidoId === partidoId)
+      .sort((a, b) => {
+        const fechaA = new Date(a.fechaCreacion).getTime();
+        const fechaB = new Date(b.fechaCreacion).getTime();
+
+        return fechaB - fechaA;
+      });
+
+    return prediccionesPartido[0];
+  }
+
   async verResultado(partido: Partido) {
-    const prediccion = this.prediccionesService.obtenerPrediccionPorPartido(partido.id, 1);
+    const prediccion = this.obtenerPrediccionMasReciente(partido.id);
 
     const resultadoReal = `${partido.golesLocal} - ${partido.golesVisitante}`;
 
@@ -109,7 +152,7 @@ export class Tab2Page {
 
     await alert.present();
   }
-  
+
   cambiarFiltro(filtro: 'hoy' | 'proximos' | 'grupos') {
     this.filtroActual = filtro;
   }
@@ -137,6 +180,29 @@ export class Tab2Page {
       console.error('Error al cargar partidos desde Supabase:', error);
 
       this.partidos = this.partidosService.obtenerPartidos();
+    }
+  }
+
+  async cargarPrediccionesDesdeSupabase() {
+    try {
+      const usuario = await this.authSupabaseService.obtenerUsuarioActual();
+
+      if (!usuario) {
+        return;
+      }
+
+      const prediccionesSupabase = await this.prediccionesSupabaseService.obtenerMisPredicciones(
+        usuario.id
+      );
+
+      this.predicciones = adaptarPrediccionesSupabase(prediccionesSupabase);
+
+      console.log('Partidos cargó predicciones desde Supabase:', this.predicciones);
+    } catch (error) {
+      console.error('Error al cargar predicciones en Partidos desde Supabase:', error);
+
+      this.predicciones = this.prediccionesService.obtenerPredicciones()
+        .filter(prediccion => prediccion.usuarioId === 1);
     }
   }
 }
