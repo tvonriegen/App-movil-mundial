@@ -15,10 +15,11 @@
     <div class="login-form">
 
       <ion-item lines="none">
-        <ion-label position="stacked">Nombre de usuario</ion-label>
+        <ion-label position="stacked">Email</ion-label>
         <ion-input
-          [(ngModel)]="nombreUsuario"
-          placeholder="Ej: ignacio10">
+          [(ngModel)]="email"
+          type="email"
+          placeholder="ejemplo@correo.com">
         </ion-input>
       </ion-item>
 
@@ -27,33 +28,56 @@
         <ion-input
           [(ngModel)]="password"
           type="password"
-          placeholder="Ingresa tu contraseña">
+          placeholder="Mínimo 6 caracteres">
+        </ion-input>
+      </ion-item>
+
+      <ion-item lines="none" *ngIf="modoRegistro">
+        <ion-label position="stacked">Nombre de usuario</ion-label>
+        <ion-input
+          [(ngModel)]="nombreUsuario"
+          placeholder="Ej: ignacio10">
         </ion-input>
       </ion-item>
 
     </div>
 
     <div class="acciones">
+
       <ion-button
+        *ngIf="!modoRegistro"
         expand="block"
         color="danger"
-        [disabled]="!nombreUsuario.trim() || !password.trim()"
+        [disabled]="!email.trim() || !password.trim()"
         (click)="iniciarSesion()">
         Iniciar sesión
+      </ion-button>
+
+      <ion-button
+        *ngIf="modoRegistro"
+        expand="block"
+        color="danger"
+        [disabled]="!email.trim() || !password.trim() || !nombreUsuario.trim()"
+        (click)="crearCuenta()">
+        Crear cuenta
       </ion-button>
 
       <ion-button
         expand="block"
         fill="outline"
         color="medium"
-        [disabled]="!nombreUsuario.trim() || !password.trim()"
-        (click)="crearCuenta()">
-        Crear cuenta
+        (click)="cambiarModoRegistro()">
+        {{ modoRegistro ? 'Ya tengo cuenta, iniciar sesión' : '¿No tienes cuenta? Crear cuenta' }}
       </ion-button>
+
     </div>
 
-    <p class="demo-text">
-      Modo demo: la contraseña solo se valida como campo obligatorio.
+    <p class="demo-text" *ngIf="!modoRegistro">
+      Ingresa con tu email y contraseña. Si aún no tienes cuenta, usa el botón de crear cuenta.
+    </p>
+
+    <p class="demo-text" *ngIf="modoRegistro">
+      Crea tu cuenta con email, contraseña y nombre de usuario. Luego podrás iniciar sesión normalmente.
     </p>
 
   </div>

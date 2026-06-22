@@ -10,6 +10,9 @@ import {
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import { AuthSupabaseService } from '../services/auth-supabase';
+import { UsuariosSupabaseService } from '../services/usuarios-supabase';
 import { UsuarioService } from '../services/usuario';
 
 @Component({
@@ -28,42 +31,123 @@ import { UsuarioService } from '../services/usuario';
   ]
 })
 export class LoginPage {
-  nombreUsuario = '';
+  email = '';
   password = '';
+  nombreUsuario = '';
+
+  modoRegistro = false;
 
   constructor(
     private router: Router,
+    private authSupabaseService: AuthSupabaseService,
+    private usuariosSupabaseService: UsuariosSupabaseService,
     private usuarioService: UsuarioService,
     private toastController: ToastController
   ) {}
 
+  cambiarModoRegistro() {
+    this.modoRegistro = !this.modoRegistro;
+  }
+
   async iniciarSesion() {
-    const usuarioLimpio = this.nombreUsuario.trim();
+    const emailLimpio = this.email.trim().toLowerCase();
     const passwordLimpia = this.password.trim();
 
-    if (!usuarioLimpio || !passwordLimpia) {
-      await this.mostrarErrorLogin();
+    if (!emailLimpio || !passwordLimpia) {
+      await this.mostrarToast('Ingresa email y contraseña.', 'danger');
       return;
     }
 
-    const usuarioActual = this.usuarioService.obtenerUsuario();
+    try {
+      const data = await this.authSupabaseService.iniciarSesion(
+        emailLimpio,
+        passwordLimpia
+      );
 
-    this.usuarioService.actualizarPerfil(usuarioLimpio, usuarioActual.rol);
-    this.usuarioService.iniciarSesion();
+      const usuario = data.user;
 
-    this.router.navigate(['/tabs/tab1']);
+      if (!usuario) {
+        await this.mostrarToast('No se pudo obtener el usuario.', 'danger');
+        return;
+      }
+
+      const perfil = await this.usuariosSupabaseService.obtenerUsuarioPorId(usuario.id);
+
+      if (perfil) {
+        this.usuarioService.actualizarPerfil(
+          perfil.nombre_visible || perfil.nombre_usuario,
+          'Analista táctico'
+        );
+      } else {
+        this.usuarioService.actualizarPerfil(
+          usuario.email || 'Usuario',
+          'Analista táctico'
+        );
+      }
+
+      this.usuarioService.iniciarSesion();
+
+      await this.mostrarToast('Sesión iniciada correctamente.', 'success');
+
+      this.router.navigate(['/tabs/tab1']);
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      await this.mostrarToast('Email o contraseña incorrectos.', 'danger');
+    }
   }
 
-  crearCuenta() {
-    this.iniciarSesion();
+  async crearCuenta() {
+    const emailLimpio = this.email.trim().toLowerCase();
+    const passwordLimpia = this.password.trim();
+    const nombreLimpio = this.nombreUsuario.trim();
+
+    if (!emailLimpio || !passwordLimpia || !nombreLimpio) {
+      await this.mostrarToast('Ingresa email, contraseña y nombre de usuario.', 'danger');
+      return;
+    }
+
+    if (passwordLimpia.length < 6) {
+      await this.mostrarToast('La contraseña debe tener al menos 6 caracteres.', 'danger');
+      return;
+    }
+
+    try {
+      const data = await this.authSupabaseService.registrar(
+        emailLimpio,
+        passwordLimpia
+      );
+
+      const usuario = data.user;
+
+      if (!usuario) {
+        await this.mostrarToast('No se pudo crear el usuario.', 'danger');
+        return;
+      }
+
+      await this.usuariosSupabaseService.obtenerOCrearPerfil(
+        usuario.id,
+        nombreLimpio,
+        usuario.email ?? emailLimpio
+      );
+
+      this.usuarioService.actualizarPerfil(nombreLimpio, 'Analista táctico');
+      this.usuarioService.iniciarSesion();
+
+      await this.mostrarToast('Cuenta creada correctamente.', 'success');
+
+      this.router.navigate(['/tabs/tab1']);
+    } catch (error) {
+      console.error('Error al crear cuenta:', error);
+      await this.mostrarToast('No se pudo crear la cuenta. Revisa los datos.', 'danger');
+    }
   }
 
-  async mostrarErrorLogin() {
+  async mostrarToast(message: string, color: 'success' | 'danger' | 'medium') {
     const toast = await this.toastController.create({
-      message: 'Ingresa tu nombre de usuario y contraseña para continuar.',
+      message,
       duration: 2200,
       position: 'bottom',
-      color: 'danger'
+      color
     });
 
     await toast.present();

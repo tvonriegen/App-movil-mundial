@@ -27,6 +27,7 @@ import { Partido } from '../models/partido.model';
 
 import { PartidosSupabaseService } from '../services/partidos-supabase';
 import { adaptarPartidosSupabase } from '../adapters/partido.adapter';
+import { AuthSupabaseService } from '../services/auth-supabase';
 
 @Component({
   selector: 'app-perfil',
@@ -57,7 +58,8 @@ export class PerfilPage {
     private partidosService: PartidosService,
     private alertController: AlertController,
     private router: Router,
-    private partidosSupabaseService: PartidosSupabaseService
+    private partidosSupabaseService: PartidosSupabaseService,
+    private authSupabaseService: AuthSupabaseService
   ) {
     this.usuario = this.usuarioService.obtenerUsuario();
 
@@ -237,7 +239,13 @@ export class PerfilPage {
         },
         {
           text: 'Cerrar sesión',
-          handler: () => {
+          handler: async () => {
+            try {
+              await this.authSupabaseService.cerrarSesion();
+            } catch (error) {
+              console.error('Error al cerrar sesión en Supabase:', error);
+            }
+
             this.usuarioService.cerrarSesion();
             this.router.navigate(['/login']);
           }
@@ -260,7 +268,13 @@ export class PerfilPage {
         {
           text: 'Restablecer',
           role: 'destructive',
-          handler: () => {
+          handler: async () => {
+            try {
+              await this.authSupabaseService.cerrarSesion();
+            } catch (error) {
+              console.error('Error al cerrar sesión en Supabase:', error);
+            }
+
             this.prediccionesService.limpiarPredicciones();
             this.ligasService.limpiarLigasGuardadas();
             this.usuarioService.limpiarUsuarioGuardado();
