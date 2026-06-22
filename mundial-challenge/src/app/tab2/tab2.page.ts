@@ -16,6 +16,7 @@ import { RouterModule } from '@angular/router';
 import { PartidosService } from '../services/partidos';
 import { Partido } from '../models/partido.model';
 import { PrediccionesService } from '../services/predicciones';
+import { PartidosSupabaseService } from '../services/partidos-supabase';
 
 @Component({
   selector: 'app-tab2',
@@ -43,9 +44,12 @@ export class Tab2Page {
   constructor(
     private partidosService: PartidosService,
     private prediccionesService: PrediccionesService,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private partidosSupabaseService: PartidosSupabaseService
   ) {
     this.partidos = this.partidosService.obtenerPartidos();
+
+    this.probarConexionSupabase();
   }
 
   tienePrediccion(partidoId: number): boolean {
@@ -119,5 +123,15 @@ export class Tab2Page {
     }
 
     return this.partidos;
+  }
+
+  async probarConexionSupabase() {
+    try {
+      const partidosSupabase = await this.partidosSupabaseService.obtenerPartidos();
+
+      console.log('Partidos desde Supabase:', partidosSupabase);
+    } catch (error) {
+      console.error('Error al leer partidos desde Supabase:', error);
+    }
   }
 }

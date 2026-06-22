@@ -33,9 +33,4 @@ export const routes: Routes = [
       },
     ],
   },
-  {
-    path: '',
-    redirectTo: '/tabs/tab1',
-    pathMatch: 'full',
-  },
 ];
