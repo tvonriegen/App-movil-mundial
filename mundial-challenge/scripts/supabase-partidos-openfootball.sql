@@ -672,9 +672,9 @@ values
   'Iraq',
   '🇫🇷',
   '🇮🇶',
-  'pendiente',
-  null,
-  null
+  'finalizado',
+  3,
+  0
 ),
 (
   52,
@@ -685,9 +685,9 @@ values
   'Senegal',
   '🇳🇴',
   '🇸🇳',
-  'pendiente',
-  null,
-  null
+  'finalizado',
+  3,
+  2
 ),
 (
   53,
@@ -763,9 +763,9 @@ values
   'Algeria',
   '🇯🇴',
   '🇩🇿',
-  'pendiente',
-  null,
-  null
+  'finalizado',
+  1,
+  2
 ),
 (
   59,
